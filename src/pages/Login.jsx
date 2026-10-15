@@ -1,78 +1,79 @@
-import { useState, useContext } from 'react';
+import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { AuthContext } from '../context/AuthContext';
+import { motion } from 'framer-motion';
+import { useAuth } from '../context/AuthContext';
 
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const { login } = useContext(AuthContext);
+  const { login } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    const res = login(email, password);
-    if (res.success) {
-      navigate('/admin'); // Si es admin, lo manda al panel
-    } else {
-      setError(res.message);
+    if (email && password) {
+      const res = login(email, password);
+      if (res.user.role === 'admin') {
+        navigate('/admin');
+      } else {
+        navigate('/catalog');
+      }
     }
   };
 
   return (
-    <div className="max-w-md mx-auto px-4 py-20">
-      <div className="bg-slate-900 border border-slate-800 p-8 rounded-3xl shadow-2xl space-y-6">
-        <div className="text-center space-y-2">
-          <span className="text-amber-400 font-bold text-xs tracking-widest uppercase bg-amber-400/10 px-3 py-1.5 rounded-full">
-            Seguridad NextDrive
-          </span>
-          <h1 className="text-3xl font-extrabold font-Montserrat text-white">Iniciar Sesión</h1>
-          <p className="text-slate-400 text-xs">Accede al panel de administración o tu cuenta.</p>
-        </div>
-
-        {error && (
-          <div className="bg-red-500/10 border border-red-500/30 text-red-400 p-3 rounded-xl text-xs text-center">
-            {error}
-          </div>
-        )}
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0 }}
+      className="min-h-screen bg-black text-white pt-32 pb-16 px-4 flex justify-center items-center"
+    >
+      <div className="w-full max-w-md bg-zinc-950 p-8 rounded-3xl border border-zinc-800 shadow-2xl">
+        <h2 className="text-3xl font-extrabold text-center mb-2">
+          Iniciar <span className="text-amber-500">Sesión</span>
+        </h2>
+        <p className="text-zinc-400 text-sm text-center mb-6">Accede a tu cuenta de NextDrive</p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-slate-300 text-xs font-semibold mb-1">Correo Electrónico</label>
-            <input 
-              type="email" 
+            <label className="block text-xs font-semibold text-zinc-400 mb-1">Correo Electrónico</label>
+            <input
+              type="email"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="admin@nextdrive.com"
-              className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-amber-400"
+              placeholder="admin@nextdrive.com o tu email"
+              className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-amber-500 text-sm"
             />
           </div>
 
           <div>
-            <label className="block text-slate-300 text-xs font-semibold mb-1">Contraseña</label>
-            <input 
-              type="password" 
+            <label className="block text-xs font-semibold text-zinc-400 mb-1">Contraseña</label>
+            <input
+              type="password"
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
-              className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-amber-400"
+              className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-amber-500 text-sm"
             />
           </div>
 
-          <button 
+          <button
             type="submit"
-            className="w-full bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold py-3 rounded-xl text-sm transition shadow-lg"
+            className="w-full py-3.5 bg-amber-500 text-black font-bold rounded-xl hover:bg-amber-400 transition-colors shadow-lg shadow-amber-500/10 mt-2"
           >
             Ingresar
           </button>
         </form>
 
-        <div className="text-center pt-4 border-t border-slate-800 text-xs text-slate-400">
-          ¿No tienes una cuenta? <Link to="/register" className="text-amber-400 font-semibold hover:underline">Regístrate aquí</Link>
-        </div>
+        <p className="text-xs text-zinc-400 text-center mt-6">
+          ¿No tienes cuenta?{' '}
+          <Link to="/register" className="text-amber-500 font-semibold hover:underline">
+            Regístrate aquí
+          </Link>
+        </p>
       </div>
-    </div>
+    </motion.div>
   );
 }

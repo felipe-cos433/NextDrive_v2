@@ -16,7 +16,7 @@ export function FavoritesProvider({ children }) {
     try {
       localStorage.setItem('nextdrive_favorites', JSON.stringify(favorites));
     } catch (e) {
-      console.error("Error al guardar en localStorage", e);
+      console.error("Error guardando favoritos en localStorage", e);
     }
   }, [favorites]);
 
@@ -42,6 +42,7 @@ export function FavoritesProvider({ children }) {
   );
 }
 
+// 👈 Esta función exportada es la que permite usar el contexto en CarDetail.jsx
 export function useFavorites() {
   return useContext(FavoritesContext);
 }
