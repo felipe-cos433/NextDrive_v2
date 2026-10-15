@@ -7,6 +7,7 @@ import CarDetail from './pages/CarDetail';
 import Contact from './pages/Contact';
 import Favorites from './pages/Favorites';
 import Compare from './pages/Compare';
+import Financing from './pages/Financing'; // 👈 1. IMPORTA AQUÍ EL COMPONENTE DE FINANCIACIÓN
 import AdminDashboard from './pages/AdminDashboard';
 import Login from './pages/Login';
 import Register from './pages/Register';
@@ -35,6 +36,7 @@ export default function App() {
                     <Route path="/contact" element={<Contact />} />
                     <Route path="/favorites" element={<Favorites />} />
                     <Route path="/compare" element={<Compare />} />
+                    <Route path="/financing" element={<Financing />} /> {/* 👈 2. AÑADE LA RUTA AQUÍ */}
                     <Route path="/login" element={<Login />} />
                     <Route path="/register" element={<Register />} />
                     

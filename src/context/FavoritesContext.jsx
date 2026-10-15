@@ -1,31 +1,47 @@
-import React, { createContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 
-export const FavoritesContext = createContext();
+const FavoritesContext = createContext();
 
 export function FavoritesProvider({ children }) {
   const [favorites, setFavorites] = useState(() => {
-    const saved = localStorage.getItem('nextdrive_favorites');
-    return saved ? JSON.parse(saved) : [];
+    try {
+      const saved = localStorage.getItem('nextdrive_favorites');
+      return saved ? JSON.parse(saved) : [];
+    } catch (e) {
+      return [];
+    }
   });
 
   useEffect(() => {
-    localStorage.setItem('nextdrive_favorites', JSON.stringify(favorites));
+    try {
+      localStorage.setItem('nextdrive_favorites', JSON.stringify(favorites));
+    } catch (e) {
+      console.error("Error al guardar en localStorage", e);
+    }
   }, [favorites]);
 
   const toggleFavorite = (car) => {
-    setFavorites(prev => {
-      const exists = prev.find(item => item.id === car.id);
+    setFavorites((prev) => {
+      const exists = prev.some((item) => item.id === car.id);
       if (exists) {
-        return prev.filter(item => item.id !== car.id);
+        return prev.filter((item) => item.id !== car.id);
       } else {
         return [...prev, car];
       }
     });
   };
 
+  const isFavorite = (carId) => {
+    return favorites.some((item) => item.id === carId);
+  };
+
   return (
-    <FavoritesContext.Provider value={{ favorites, toggleFavorite }}>
+    <FavoritesContext.Provider value={{ favorites, toggleFavorite, isFavorite }}>
       {children}
     </FavoritesContext.Provider>
   );
+}
+
+export function useFavorites() {
+  return useContext(FavoritesContext);
 }

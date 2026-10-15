@@ -1,59 +1,104 @@
 import React, { useState } from 'react';
-import { carsData } from '../data/carsData';
+import { cars } from '../data/cars'; // Ajusta la ruta si tus datos están en otro archivo
 
 export default function Compare() {
-  const [car1, setCar1] = useState(carsData[0]);
-  const [car2, setCar2] = useState(carsData[1] || carsData[0]);
+  const [selectedCar1, setSelectedCar1] = useState(cars[0] || null);
+  const [selectedCar2, setSelectedCar2] = useState(cars[1] || cars[0] || null);
+
+  // Formateador limpio para evitar duplicar el símbolo de dólar ($$)
+  const formatPrice = (price) => {
+    if (!price) return '$0';
+    const cleanStr = String(price).replace(/[^0-9]/g, '');
+    return `$${Number(cleanStr).toLocaleString()}`;
+  };
 
   return (
-    <div className="min-h-screen bg-black text-white pt-28 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto pb-16">
-      <h1 className="text-3xl font-extrabold tracking-tight mb-2">Comparador de <span className="text-amber-400">Modelos</span></h1>
-      <p className="text-zinc-400 text-sm mb-8">Compara las prestaciones y características técnicas de nuestros vehículos exclusivos.</p>
+    <div className="min-h-screen bg-black text-white pt-28 pb-16 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto">
+      {/* Encabezado */}
+      <div className="mb-10 text-center sm:text-left">
+        <h1 className="text-4xl font-extrabold tracking-tight mb-2">
+          Comparador de <span className="text-amber-500">Modelos</span>
+        </h1>
+        <p className="text-zinc-400">
+          Compara las prestaciones, motorización y características técnicas de nuestros vehículos exclusivos cara a cara.
+        </p>
+      </div>
 
-      {/* Selectores de autos */}
+      {/* Selectores desplegables */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-        <select 
-          className="bg-zinc-950 border border-zinc-800 text-white p-3 rounded-xl text-sm font-bold focus:outline-none focus:border-amber-400"
-          onChange={(e) => setCar1(carsData.find(c => c.id === Number(e.target.value)))}
-        >
-          {carsData.map(car => <option key={car.id} value={car.id}>{car.name}</option>)}
-        </select>
-
-        <select 
-          className="bg-zinc-950 border border-zinc-800 text-white p-3 rounded-xl text-sm font-bold focus:outline-none focus:border-amber-400"
-          defaultValue={carsData[1]?.id}
-          onChange={(e) => setCar2(carsData.find(c => c.id === Number(e.target.value)))}
-        >
-          {carsData.map(car => <option key={car.id} value={car.id}>{car.name}</option>)}
-        </select>
-      </div>
-
-      {/* Tabla de Comparación */}
-      <div className="bg-zinc-950 border border-zinc-900 rounded-2xl overflow-hidden shadow-2xl">
-        <div className="grid grid-cols-2 border-b border-zinc-900 p-6 bg-zinc-900/50">
-          <div className="text-center">
-            <img src={car1.image} alt={car1.name} className="h-40 object-cover mx-auto rounded-xl mb-3 shadow-md" />
-            <h2 className="font-extrabold text-lg">{car1.name}</h2>
-            <span className="text-amber-400 font-bold">${car1.price?.toLocaleString()}</span>
-          </div>
-          <div className="text-center border-l border-zinc-900">
-            <img src={car2.image} alt={car2.name} className="h-40 object-cover mx-auto rounded-xl mb-3 shadow-md" />
-            <h2 className="font-extrabold text-lg">{car2.name}</h2>
-            <span className="text-amber-400 font-bold">${car2.price?.toLocaleString()}</span>
-          </div>
+        <div>
+          <label className="block text-sm font-medium text-zinc-400 mb-2">Seleccionar Vehículo 1</label>
+          <select
+            value={selectedCar1?.id || ''}
+            onChange={(e) => setSelectedCar1(cars.find(c => String(c.id) === e.target.value))}
+            className="w-full bg-zinc-900 border border-zinc-700 rounded-xl p-3 text-white focus:outline-none focus:border-amber-500"
+          >
+            {cars.map((car) => (
+              <option key={car.id} value={car.id} className="bg-zinc-900 text-white">
+                {car.name || car.title}
+              </option>
+            ))}
+          </select>
         </div>
 
-        <div className="p-6 space-y-4 text-sm">
-          <div className="grid grid-cols-2 py-2 border-b border-zinc-900/50">
-            <span className="text-center text-zinc-300 font-medium">{car1.category}</span>
-            <span className="text-center text-zinc-300 font-medium border-l border-zinc-900">{car2.category}</span>
-          </div>
-          <div className="grid grid-cols-2 py-2 border-b border-zinc-900/50">
-            <span className="text-center text-zinc-400">Categoría</span>
-            <span className="text-center text-zinc-400 border-l border-zinc-900">Categoría</span>
-          </div>
+        <div>
+          <label className="block text-sm font-medium text-zinc-400 mb-2">Seleccionar Vehículo 2</label>
+          <select
+            value={selectedCar2?.id || ''}
+            onChange={(e) => setSelectedCar2(cars.find(c => String(c.id) === e.target.value))}
+            className="w-full bg-zinc-900 border border-zinc-700 rounded-xl p-3 text-white focus:outline-none focus:border-amber-500"
+          >
+            {cars.map((car) => (
+              <option key={car.id} value={car.id} className="bg-zinc-900 text-white">
+                {car.name || car.title}
+              </option>
+            ))}
+          </select>
         </div>
       </div>
+
+      {/* Tarjetas comparativas principales */}
+      {selectedCar1 && selectedCar2 && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-zinc-900/40 p-6 rounded-3xl border border-zinc-800 backdrop-blur-md">
+          
+          {/* Vehículo 1 */}
+          <div className="bg-zinc-950 p-6 rounded-2xl border border-zinc-800 text-center flex flex-col justify-between">
+            <div>
+              <img 
+                src={selectedCar1.image || selectedCar1.img} 
+                alt={selectedCar1.name || selectedCar1.title} 
+                className="w-full h-52 object-cover rounded-xl mb-4 border border-zinc-800" 
+              />
+              <h3 className="text-2xl font-bold mb-1">{selectedCar1.name || selectedCar1.title}</h3>
+              <p className="text-2xl font-black text-amber-500 my-2">{formatPrice(selectedCar1.price)}</p>
+            </div>
+            <div className="mt-6 text-left space-y-2 border-t border-zinc-800 pt-4 text-sm text-zinc-300">
+              <div className="flex justify-between"><span>Categoría:</span> <span className="text-white font-medium">{selectedCar1.category || 'Deportivo / Lujo'}</span></div>
+              <div className="flex justify-between"><span>Potencia:</span> <span className="text-white font-medium">{selectedCar1.hp || selectedCar1.power || 'N/D'}</span></div>
+              <div className="flex justify-between"><span>Transmisión:</span> <span className="text-white font-medium">{selectedCar1.transmission || 'Automática'}</span></div>
+            </div>
+          </div>
+
+          {/* Vehículo 2 */}
+          <div className="bg-zinc-950 p-6 rounded-2xl border border-zinc-800 text-center flex flex-col justify-between">
+            <div>
+              <img 
+                src={selectedCar2.image || selectedCar2.img} 
+                alt={selectedCar2.name || selectedCar2.title} 
+                className="w-full h-52 object-cover rounded-xl mb-4 border border-zinc-800" 
+              />
+              <h3 className="text-2xl font-bold mb-1">{selectedCar2.name || selectedCar2.title}</h3>
+              <p className="text-2xl font-black text-amber-500 my-2">{formatPrice(selectedCar2.price)}</p>
+            </div>
+            <div className="mt-6 text-left space-y-2 border-t border-zinc-800 pt-4 text-sm text-zinc-300">
+              <div className="flex justify-between"><span>Categoría:</span> <span className="text-white font-medium">{selectedCar2.category || 'Deportivo / Lujo'}</span></div>
+              <div className="flex justify-between"><span>Potencia:</span> <span className="text-white font-medium">{selectedCar2.hp || selectedCar2.power || 'N/D'}</span></div>
+              <div className="flex justify-between"><span>Transmisión:</span> <span className="text-white font-medium">{selectedCar2.transmission || 'Automática'}</span></div>
+            </div>
+          </div>
+
+        </div>
+      )}
     </div>
   );
 }

@@ -1,58 +1,46 @@
 import React, { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 export default function Navbar() {
-  const location = useLocation();
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
+  const navigate = useNavigate();
 
-  const navLinks = [
-    { name: 'Catálogo', path: '/' },
-    { name: 'Financiación', path: '/financing' },
-    { name: 'Comparar', path: '/compare' },
-    { name: 'Citas', path: '/appointments' },
-    { name: 'Favoritos', path: '/favorites' },
-    { name: 'Admin', path: '/admin' }
-  ];
+  const handleLinkClick = (path) => {
+    setIsOpen(false);
+    navigate(path);
+  };
 
   return (
-    <nav className="bg-black/75 backdrop-blur-xl border-b border-zinc-900/80 sticky top-0 z-50 transition-all duration-300">
+    <nav className="fixed top-0 left-0 w-full z-50 bg-black/80 backdrop-blur-md border-b border-zinc-800">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-20">
+          
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-2 group">
-            <span className="text-xl font-black tracking-wider text-white uppercase">
-              Next<span className="text-amber-400">Drive</span>
+          <Link to="/" className="flex items-center space-x-2">
+            <span className="text-2xl font-black tracking-wider text-white">
+              NEXT<span className="text-amber-500">DRIVE</span>
             </span>
           </Link>
 
-          {/* Desktop Navigation Links */}
-          <div className="hidden md:flex items-center space-x-1">
-            {navLinks.map((link) => {
-              const isActive = location.pathname === link.path;
-              return (
-                <Link
-                  key={link.name}
-                  to={link.path}
-                  className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all duration-300 ${
-                    isActive
-                      ? 'text-amber-400 bg-amber-400/10 border border-amber-500/20 shadow-lg shadow-amber-400/5'
-                      : 'text-zinc-400 hover:text-white hover:bg-zinc-900/60'
-                  }`}
-                >
-                  {link.name}
-                </Link>
-              );
-            })}
+          {/* Enlaces de Escritorio */}
+          <div className="hidden md:flex items-center space-x-8 text-sm font-medium">
+            <Link to="/" className="text-zinc-300 hover:text-amber-500 transition-colors">Inicio</Link>
+            <Link to="/catalog" className="text-zinc-300 hover:text-amber-500 transition-colors">Catálogo</Link>
+            <Link to="/compare" className="text-zinc-300 hover:text-amber-500 transition-colors">Comparador</Link>
+            <Link to="/financing" className="text-zinc-300 hover:text-amber-500 transition-colors">Financiación</Link>
+            <Link to="/favorites" className="text-zinc-300 hover:text-amber-500 transition-colors">Favoritos</Link>
+            <Link to="/contact" className="text-zinc-300 hover:text-amber-500 transition-colors">Contacto</Link>
           </div>
 
-          {/* Mobile Menu Button */}
+          {/* Botón menú móvil (Hamburguesa) */}
           <div className="md:hidden flex items-center">
             <button
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="text-zinc-400 hover:text-white focus:outline-none p-2 rounded-xl bg-zinc-900/50 border border-zinc-800"
+              onClick={() => setIsOpen(!isOpen)}
+              className="text-zinc-400 hover:text-white focus:outline-none p-2"
+              aria-label="Abrir menú"
             >
-              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                {mobileMenuOpen ? (
+              <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                {isOpen ? (
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 ) : (
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
@@ -63,26 +51,15 @@ export default function Navbar() {
         </div>
       </div>
 
-      {/* Mobile Menu Dropdown */}
-      {mobileMenuOpen && (
-        <div className="md:hidden bg-zinc-950/95 backdrop-blur-2xl border-b border-zinc-900 px-4 pt-2 pb-6 space-y-2">
-          {navLinks.map((link) => {
-            const isActive = location.pathname === link.path;
-            return (
-              <Link
-                key={link.name}
-                to={link.path}
-                onClick={() => setMobileMenuOpen(false)}
-                className={`block px-4 py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${
-                  isActive
-                    ? 'text-amber-400 bg-amber-400/10 border border-amber-500/20'
-                    : 'text-zinc-400 hover:text-white hover:bg-zinc-900'
-                }`}
-              >
-                {link.name}
-              </Link>
-            );
-          })}
+      {/* Menú desplegable móvil */}
+      {isOpen && (
+        <div className="md:hidden bg-zinc-950 border-b border-zinc-800 px-4 pt-2 pb-6 space-y-3">
+          <button onClick={() => handleLinkClick('/')} className="block w-full text-left py-2 text-zinc-300 hover:text-amber-500 font-medium">Inicio</button>
+          <button onClick={() => handleLinkClick('/catalog')} className="block w-full text-left py-2 text-zinc-300 hover:text-amber-500 font-medium">Catálogo</button>
+          <button onClick={() => handleLinkClick('/compare')} className="block w-full text-left py-2 text-zinc-300 hover:text-amber-500 font-medium">Comparador</button>
+          <button onClick={() => handleLinkClick('/financing')} className="block w-full text-left py-2 text-zinc-300 hover:text-amber-500 font-medium">Financiación</button>
+          <button onClick={() => handleLinkClick('/favorites')} className="block w-full text-left py-2 text-zinc-300 hover:text-amber-500 font-medium">Favoritos</button>
+          <button onClick={() => handleLinkClick('/contact')} className="block w-full text-left py-2 text-zinc-300 hover:text-amber-500 font-medium">Contacto</button>
         </div>
       )}
     </nav>

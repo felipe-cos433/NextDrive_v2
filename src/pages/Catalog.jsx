@@ -1,102 +1,83 @@
 import React, { useState } from 'react';
-import { carsData } from '../data/carsData';
+import { motion } from 'framer-motion';
 import CarCard from '../components/CarCard';
-
-const fallbackCars = [
-  {
-    id: 1,
-    name: "BMW M5 Competition",
-    category: "Deportivo",
-    price: 110000,
-    image: "https://images.unsplash.com/photo-1555215695-3004980ad54e?auto=format&fit=crop&q=80&w=1000",
-    description: "Sedán de altas prestaciones con motor V8 Twin-Turbo."
-  },
-  {
-    id: 2,
-    name: "Porsche 911 GT3 RS",
-    category: "Superdeportivo",
-    price: 225000,
-    image: "https://images.unsplash.com/photo-1614162692292-7ac56d7f7f1e?auto=format&fit=crop&q=80&w=1000",
-    description: "Diseñado para dominar tanto en la pista como en la calle."
-  },
-  {
-    id: 3,
-    name: "Mercedes-AMG G 63",
-    category: "SUV",
-    price: 180000,
-    image: "https://images.unsplash.com/photo-1520031441872-265e4ff70366?auto=format&fit=crop&q=80&w=1000",
-    description: "Lujo todoterreno con potencia inigualable."
-  }
-];
+import { cars } from '../data/cars'; // Ajusta la ruta si tus datos están en otro archivo
 
 export default function Catalog() {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('Todos');
+  const [filter, setFilter] = useState('All');
+  const [searchTerm, setSearchTerm] = useState('');
 
-  const categories = ['Todos', 'SUV', 'Superdeportivo', 'Muscle Car', 'Sedán de Lujo', 'Deportivo'];
-
-  const rawList = (Array.isArray(carsData) && carsData.length > 0) ? carsData : fallbackCars;
-
-  // Filtro protegido con try/catch para garantizar cero caídas por datos corruptos o indefinidos
-  const filteredCars = rawList.filter(car => {
-    try {
-      if (!car || typeof car !== 'object') return false;
-      
-      const carName = car.name ? String(car.name) : '';
-      const carCategory = car.category ? String(car.category) : 'Deportivo';
-      const query = searchQuery ? String(searchQuery).toLowerCase() : '';
-      const activeCategory = selectedCategory ? String(selectedCategory) : 'Todos';
-
-      const matchesSearch = carName.toLowerCase().includes(query);
-      const matchesCategory = activeCategory === 'Todos' || carCategory.toLowerCase() === activeCategory.toLowerCase();
-      
-      return matchesSearch && matchesCategory;
-    } catch (e) {
-      return false; // Si algo falla con un auto específico, se omite de forma segura
-    }
+  // Filtrado dinámico
+  const filteredCars = cars.filter((car) => {
+    const matchesCategory = filter === 'All' || car.category?.toLowerCase() === filter.toLowerCase();
+    const matchesSearch = (car.name || car.title || '').toLowerCase().includes(searchTerm.toLowerCase());
+    return matchesCategory && matchesSearch;
   });
 
   return (
-    <div className="min-h-screen bg-black text-white pt-28 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto pb-16">
-      <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-8">
-        <h1 className="text-3xl font-extrabold tracking-tight">Catálogo <span className="text-amber-400">Exclusivo</span></h1>
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.5 }}
+      className="min-h-screen bg-black text-white pt-28 pb-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto"
+    >
+      {/* Encabezado Principal */}
+      <div className="mb-10 text-center sm:text-left">
+        <motion.h1 
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-4xl font-extrabold tracking-tight mb-2"
+        >
+          Catálogo Exclusivo de <span className="text-amber-500">Vehículos</span>
+        </motion.h1>
+        <p className="text-zinc-400">
+          Explora nuestra flota de lujo e inspeccionada con certificaciones de alta calidad.
+        </p>
+      </div>
+
+      {/* Barra de Filtros y Búsqueda */}
+      <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-10 bg-zinc-900/50 p-4 rounded-2xl border border-zinc-800 backdrop-blur-md">
         
-        <input 
+        {/* Campo de Búsqueda */}
+        <input
           type="text"
-          placeholder="Buscar vehículo por modelo..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="bg-zinc-950 border border-zinc-800 px-4 py-2.5 rounded-xl text-sm focus:outline-none focus:border-amber-400 w-full md:w-80 shadow-inner"
+          placeholder="Buscar vehículo..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="w-full md:w-72 bg-zinc-950 border border-zinc-700 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-amber-500 transition-colors"
         />
+
+        {/* Botones de Categoría */}
+        <div className="flex flex-wrap justify-center gap-2 w-full md:w-auto">
+          {['All', 'Híbridos', 'Eléctricos', 'Deportivos', 'SUV'].map((category) => (
+            <button
+              key={category}
+              onClick={() => setFilter(category)}
+              className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all ${
+                filter === category
+                  ? 'bg-amber-500 text-black shadow-lg shadow-amber-500/20'
+                  : 'bg-zinc-950 text-zinc-400 hover:text-white border border-zinc-800'
+              }`}
+            >
+              {category === 'All' ? 'Todos' : category}
+            </button>
+          ))}
+        </div>
       </div>
 
-      <div className="flex flex-wrap gap-2 mb-10">
-        {categories.map(category => (
-          <button
-            key={category}
-            onClick={() => setSelectedCategory(category)}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
-              selectedCategory === category
-                ? 'bg-amber-400 text-black shadow-lg shadow-amber-400/20'
-                : 'bg-zinc-900 text-zinc-400 hover:bg-zinc-800 border border-zinc-800'
-            }`}
-          >
-            {category}
-          </button>
-        ))}
-      </div>
-
+      {/* Grid de Vehículos Animados */}
       {filteredCars.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredCars.map((car, index) => (
-            <CarCard key={car.id || index} car={car} />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+          {filteredCars.map((car) => (
+            <CarCard key={car.id} car={car} />
           ))}
         </div>
       ) : (
-        <div className="text-center py-20 bg-zinc-950 rounded-2xl border border-zinc-900">
-          <p className="text-zinc-500 text-sm">No encontramos vehículos que coincidan con tu búsqueda.</p>
+        <div className="text-center py-20 bg-zinc-950 rounded-3xl border border-zinc-800/80">
+          <p className="text-zinc-500 text-lg">No se encontraron vehículos que coincidan con tu búsqueda.</p>
         </div>
       )}
-    </div>
+    </motion.div>
   );
 }
