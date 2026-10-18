@@ -1,99 +1,144 @@
 import React, { useState } from 'react';
+import { useAppointments } from '../context/AppointmentContext';
 
 export default function Contact() {
-  const [formData, setFormData] = useState({ name: '', email: '', phone: '', message: '' });
-  const [submitted, setSubmitted] = useState(false);
-  const [error, setError] = useState('');
+  const { addAppointment } = useAppointments();
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    carInterest: '',
+    date: '',
+    message: '',
+  });
+
+  const [notification, setNotification] = useState('');
+
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!formData.name || !formData.email || !formData.message) {
-      setError('Por favor, completa todos los campos obligatorios.');
-      return;
-    }
-    setError('');
-    setSubmitted(true);
-    // Aquí puedes disparar tu Toast si lo tienes disponible en el contexto
+    addAppointment(formData);
+
+    setNotification('¡Tu solicitud de Test Drive / Contacto ha sido enviada con éxito! 🏎️');
+    setTimeout(() => setNotification(''), 4000);
+
+    setFormData({
+      name: '',
+      email: '',
+      phone: '',
+      carInterest: '',
+      date: '',
+      message: '',
+    });
   };
 
   return (
-    <div className="min-h-screen bg-black text-white pt-28 pb-16 px-4 sm:px-6 lg:px-8 max-w-3xl mx-auto">
-      <h1 className="text-4xl font-extrabold mb-2">
-        Contacto y <span className="text-amber-500">Agendamiento</span>
-      </h1>
-      <p className="text-zinc-400 mb-8">
-        Ponte en contacto con nuestros asesores comerciales o agenda tu prueba de manejo exclusiva.
-      </p>
+    <div className="max-w-4xl mx-auto px-4 py-10 space-y-8">
+      <div>
+        <h1 className="text-3xl font-black text-white">
+          Contacto y <span className="text-yellow-500">Agendamiento</span>
+        </h1>
+        <p className="text-slate-400 text-sm mt-1">
+          Ponte en contacto con nuestros asesores comerciales o agenda tu prueba de manejo exclusiva.
+        </p>
+      </div>
 
-      {submitted ? (
-        <div className="bg-zinc-900 border border-amber-500/50 p-8 rounded-2xl text-center space-y-4">
-          <div className="text-amber-500 text-5xl">✨</div>
-          <h3 className="text-2xl font-bold">¡Solicitud Recibida con Éxito!</h3>
-          <p className="text-zinc-400">Un asesor especializado de NextDrive se comunicará contigo en menos de 2 horas hábiles.</p>
-          <button 
-            onClick={() => { setSubmitted(false); setFormData({ name: '', email: '', phone: '', message: '' }); }}
-            className="mt-4 px-6 py-2 bg-amber-500 text-black font-semibold rounded-xl hover:bg-amber-400 transition-colors"
-          >
-            Enviar otra consulta
-          </button>
+      {notification && (
+        <div className="bg-emerald-500/10 border border-emerald-500/40 text-emerald-400 px-4 py-3 rounded-xl text-sm font-semibold">
+          {notification}
         </div>
-      ) : (
-        <form onSubmit={handleSubmit} className="bg-zinc-900/60 p-8 rounded-3xl border border-zinc-800 backdrop-blur-md space-y-6">
-          {error && <div className="p-4 bg-red-950/50 border border-red-500/50 text-red-300 rounded-xl text-sm">{error}</div>}
-          
+      )}
+
+      <div className="bg-slate-900 border border-slate-800 p-8 rounded-2xl shadow-xl">
+        <form onSubmit={handleSubmit} className="space-y-4 text-sm">
           <div>
-            <label className="block text-sm font-medium text-zinc-300 mb-2">Nombre Completo *</label>
-            <input 
-              type="text" 
+            <label className="block text-slate-300 mb-1">Nombre Completo *</label>
+            <input
+              type="text"
+              name="name"
+              required
+              placeholder="Ej. Carlos Mendoza"
               value={formData.name}
-              onChange={(e) => setFormData({...formData, name: e.target.value})}
-              placeholder="Ej. Carlos Mendoza" 
-              className="w-full bg-zinc-950 border border-zinc-700 rounded-xl p-3 text-white focus:outline-none focus:border-amber-500"
+              onChange={handleChange}
+              className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-yellow-500"
             />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-zinc-300 mb-2">Correo Electrónico *</label>
-              <input 
-                type="email" 
+              <label className="block text-slate-300 mb-1">Correo Electrónico *</label>
+              <input
+                type="email"
+                name="email"
+                required
+                placeholder="carlos@example.com"
                 value={formData.email}
-                onChange={(e) => setFormData({...formData, email: e.target.value})}
-                placeholder="carlos@example.com" 
-                className="w-full bg-zinc-950 border border-zinc-700 rounded-xl p-3 text-white focus:outline-none focus:border-amber-500"
+                onChange={handleChange}
+                className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-yellow-500"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-zinc-300 mb-2">Teléfono / WhatsApp</label>
-              <input 
-                type="tel" 
+              <label className="block text-slate-300 mb-1">Teléfono / WhatsApp *</label>
+              <input
+                type="tel"
+                name="phone"
+                required
+                placeholder="+57 300 1234567"
                 value={formData.phone}
-                onChange={(e) => setFormData({...formData, phone: e.target.value})}
-                placeholder="+57 300 1234567" 
-                className="w-full bg-zinc-950 border border-zinc-700 rounded-xl p-3 text-white focus:outline-none focus:border-amber-500"
+                onChange={handleChange}
+                className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-yellow-500"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-slate-300 mb-1">Vehículo de Interés</label>
+              <input
+                type="text"
+                name="carInterest"
+                placeholder="Ej. Porsche 911 / BMW M4"
+                value={formData.carInterest}
+                onChange={handleChange}
+                className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-yellow-500"
+              />
+            </div>
+            <div>
+              <label className="block text-slate-300 mb-1">Fecha Deseada para Test Drive</label>
+              <input
+                type="date"
+                name="date"
+                value={formData.date}
+                onChange={handleChange}
+                className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-yellow-500"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-zinc-300 mb-2">Mensaje o Vehículo de Interés *</label>
-            <textarea 
-              rows="4" 
-              value={formData.message}
-              onChange={(e) => setFormData({...formData, message: e.target.value})}
+            <label className="block text-slate-300 mb-1">Mensaje o Detalle *</label>
+            <textarea
+              name="message"
+              required
+              rows="4"
               placeholder="Estoy interesado en agendar un test drive para..."
-              className="w-full bg-zinc-950 border border-zinc-700 rounded-xl p-3 text-white focus:outline-none focus:border-amber-500"
+              value={formData.message}
+              onChange={handleChange}
+              className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-yellow-500"
             ></textarea>
           </div>
 
-          <button 
-            type="submit" 
-            className="w-full py-4 bg-amber-500 text-black font-bold rounded-xl hover:bg-amber-400 transition-colors shadow-lg shadow-amber-500/10"
+          <button
+            type="submit"
+            className="w-full bg-yellow-500 hover:bg-yellow-400 text-slate-950 font-bold py-3 rounded-lg transition-all duration-300"
           >
-            Enviar Solicitud
+            Enviar Agendamiento
           </button>
         </form>
-      )}
+      </div>
     </div>
   );
 }

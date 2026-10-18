@@ -1,133 +1,301 @@
-import React, { useContext, useState } from 'react';
-import { AppointmentContext } from '../context/AppointmentContext';
-import { CarContext } from '../context/CarContext'; // O tu fuente de datos de vehículos
-import Button from '../components/common/Button';
-import Input from '../components/common/Input';
+import React, { useState, useEffect } from 'react';
+import { useCars } from '../context/CarContext';
+import { exportPurchasesToExcel } from '../utils/exportToExcel';
 
 export default function AdminDashboard() {
-  const { appointments, deleteAppointment } = useContext(AppointmentContext);
-  const [activeTab, setActiveTab] = useState('appointments');
+  const { cars, addCar, deleteCar } = useCars();
+  const [orders, setOrders] = useState([]);
+  const [activeTab, setActiveTab] = useState('inventory'); // 'inventory' | 'orders'
 
-  // Estado local para simular la adición de un nuevo vehículo
-  const [newCar, setNewCar] = useState({ name: '', price: '', category: 'Deportivo', image: '' });
+  const [newCar, setNewCar] = useState({
+    title: '',
+    brand: '',
+    category: 'Deportivo',
+    price: '',
+    year: 2026,
+    image: '',
+    description: ''
+  });
 
-  const handleAddCar = (e) => {
+  useEffect(() => {
+    const savedOrders = JSON.parse(localStorage.getItem('nextdrive_orders') || '[]');
+    setOrders(savedOrders);
+  }, []);
+
+  const handleAddCarSubmit = (e) => {
     e.preventDefault();
-    alert(`Vehículo "${newCar.name}" agregado con éxito al catálogo.`);
-    setNewCar({ name: '', price: '', category: 'Deportivo', image: '' });
+    if (!newCar.title || !newCar.price) return;
+
+    addCar({
+      ...newCar,
+      price: Number(newCar.price)
+    });
+
+    setNewCar({
+      title: '',
+      brand: '',
+      category: 'Deportivo',
+      price: '',
+      year: 2026,
+      image: '',
+      description: ''
+    });
+
+    alert('¡Vehículo agregado con éxito al catálogo!');
+  };
+
+  const handleClearOrders = () => {
+    if (window.confirm('¿Estás seguro de limpiar todo el historial de ventas?')) {
+      localStorage.removeItem('nextdrive_orders');
+      setOrders([]);
+    }
   };
 
   return (
-    <div className="min-h-screen bg-black text-white pt-28 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto pb-16">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8 border-b border-zinc-900 pb-6">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+      
+      {/* Encabezado */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-800 pb-6">
         <div>
-          <h1 className="text-3xl font-extrabold tracking-tight">Panel de <span className="text-amber-400">Administración</span></h1>
-          <p className="text-zinc-400 text-sm mt-1">Gestión centralizada de citas, inventario y solicitudes de clientes.</p>
+          <h1 className="text-3xl font-black text-white">
+            Panel de <span className="text-yellow-500">Administración</span>
+          </h1>
+          <p className="text-slate-400 text-sm mt-1">Gestiona el inventario de autos y revisa el historial de ventas.</p>
         </div>
 
-        {/* Pestañas de Navegación del Panel */}
-        <div className="flex gap-2 bg-zinc-950 p-1.5 rounded-xl border border-zinc-900">
-          <button
-            onClick={() => setActiveTab('appointments')}
-            className={`px-4 py-2 rounded-lg text-xs font-bold transition ${
-              activeTab === 'appointments' ? 'bg-amber-400 text-black shadow' : 'text-zinc-400 hover:text-white'
-            }`}
-          >
-            Citas Agendadas ({appointments.length})
-          </button>
+        {/* Pestañas */}
+        <div className="flex bg-slate-900 border border-slate-800 p-1.5 rounded-xl gap-2">
           <button
             onClick={() => setActiveTab('inventory')}
-            className={`px-4 py-2 rounded-lg text-xs font-bold transition ${
-              activeTab === 'inventory' ? 'bg-amber-400 text-black shadow' : 'text-zinc-400 hover:text-white'
+            className={`px-4 py-2 rounded-lg text-xs font-bold transition-colors ${
+              activeTab === 'inventory' ? 'bg-yellow-500 text-slate-950' : 'text-slate-400 hover:text-white'
             }`}
           >
-            Agregar Vehículo
+            🚗 Inventario ({cars.length})
+          </button>
+          <button
+            onClick={() => setActiveTab('orders')}
+            className={`px-4 py-2 rounded-lg text-xs font-bold transition-colors ${
+              activeTab === 'orders' ? 'bg-yellow-500 text-slate-950' : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            📊 Historial de Ventas ({orders.length})
           </button>
         </div>
       </div>
 
-      {/* Contenido de Citas */}
-      {activeTab === 'appointments' && (
-        <div className="space-y-4">
-          <h2 className="text-xl font-bold mb-4">Solicitudes de Test Drive</h2>
-          {appointments.length > 0 ? (
-            <div className="grid grid-cols-1 gap-4">
-              {appointments.map(app => (
-                <div key={app.id} className="bg-zinc-950 border border-zinc-900 p-5 rounded-2xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-amber-400 font-bold text-sm">{app.clientName || app.name}</span>
-                      <span className="bg-amber-400/10 text-amber-400 text-[10px] font-extrabold px-2.5 py-0.5 rounded-full border border-amber-400/20">
-                        {app.status || 'Pendiente'}
-                      </span>
-                    </div>
-                    <p className="text-xs text-zinc-400 mt-1">Vehículo de interés: <strong className="text-white">{app.carModel || app.vehicle}</strong></p>
-                    <p className="text-xs text-zinc-500 mt-0.5">Contacto: {app.phone} | Correo: {app.email}</p>
-                  </div>
-                  <Button 
-                    variant="danger" 
-                    className="text-xs py-2 px-3"
-                    onClick={() => deleteAppointment(app.id)}
-                  >
-                    Eliminar Cita
-                  </Button>
+      {/* VISTA 1: INVENTARIO */}
+      {activeTab === 'inventory' && (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          
+          <div className="bg-slate-900/85 backdrop-blur-md border border-slate-800 p-6 rounded-2xl shadow-xl h-fit space-y-4">
+            <h2 className="text-lg font-bold text-white border-b border-slate-800 pb-3">Agregar Nuevo Vehículo</h2>
+            
+            <form onSubmit={handleAddCarSubmit} className="space-y-3">
+              <div>
+                <label className="block text-xs font-semibold text-slate-400 uppercase mb-1">Modelo / Título</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="Ej. BMW M3 Touring"
+                  value={newCar.title}
+                  onChange={(e) => setNewCar({ ...newCar, title: e.target.value })}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white text-sm focus:border-yellow-500 focus:outline-none"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-400 uppercase mb-1">Marca</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Ej. BMW"
+                    value={newCar.brand}
+                    onChange={(e) => setNewCar({ ...newCar, brand: e.target.value })}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white text-sm focus:border-yellow-500 focus:outline-none"
+                  />
                 </div>
-              ))}
+                <div>
+                  <label className="block text-xs font-semibold text-slate-400 uppercase mb-1">Categoría</label>
+                  <select
+                    value={newCar.category}
+                    onChange={(e) => setNewCar({ ...newCar, category: e.target.value })}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white text-sm focus:border-yellow-500 focus:outline-none"
+                  >
+                    <option value="Deportivo">Deportivo</option>
+                    <option value="SUV">SUV</option>
+                    <option value="Camioneta">Camioneta</option>
+                    <option value="Sedán">Sedán</option>
+                    <option value="Eléctrico">Eléctrico</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-400 uppercase mb-1">Precio ($ USD)</label>
+                  <input
+                    type="number"
+                    required
+                    placeholder="85000"
+                    value={newCar.price}
+                    onChange={(e) => setNewCar({ ...newCar, price: e.target.value })}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white text-sm focus:border-yellow-500 focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-400 uppercase mb-1">Año</label>
+                  <input
+                    type="number"
+                    value={newCar.year}
+                    onChange={(e) => setNewCar({ ...newCar, year: Number(e.target.value) })}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white text-sm focus:border-yellow-500 focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-400 uppercase mb-1">URL de la Imagen</label>
+                <input
+                  type="url"
+                  placeholder="https://images.unsplash.com/..."
+                  value={newCar.image}
+                  onChange={(e) => setNewCar({ ...newCar, image: e.target.value })}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white text-sm focus:border-yellow-500 focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-400 uppercase mb-1">Descripción</label>
+                <textarea
+                  rows="2"
+                  placeholder="Especificaciones clave..."
+                  value={newCar.description}
+                  onChange={(e) => setNewCar({ ...newCar, description: e.target.value })}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white text-sm focus:border-yellow-500 focus:outline-none"
+                />
+              </div>
+
+              <button
+                type="submit"
+                className="w-full bg-yellow-500 hover:bg-yellow-400 text-slate-950 font-bold py-2.5 rounded-xl transition-colors shadow-lg text-sm"
+              >
+                Guardar Vehículo
+              </button>
+            </form>
+          </div>
+
+          <div className="lg:col-span-2 bg-slate-900/85 backdrop-blur-md border border-slate-800 rounded-2xl p-6 shadow-xl space-y-4">
+            <h2 className="text-lg font-bold text-white border-b border-slate-800 pb-3">Lista de Vehículos Activos</h2>
+            
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-sm text-slate-300">
+                <thead className="text-xs uppercase bg-slate-950 text-slate-400">
+                  <tr>
+                    <th className="p-3">Vehículo</th>
+                    <th className="p-3">Categoría</th>
+                    <th className="p-3">Precio</th>
+                    <th className="p-3 text-right">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-800/60">
+                  {cars.map((car) => (
+                    <tr key={car.id} className="hover:bg-slate-950/40">
+                      <td className="p-3 font-semibold text-white flex items-center gap-3">
+                        <img src={car.image} alt={car.title} className="w-10 h-10 object-cover rounded-lg bg-slate-950" />
+                        <div>
+                          <p>{car.title}</p>
+                          <p className="text-xs text-slate-500">{car.brand} • {car.year}</p>
+                        </div>
+                      </td>
+                      <td className="p-3"><span className="bg-slate-950 border border-slate-800 px-2 py-1 rounded text-xs text-yellow-500">{car.category}</span></td>
+                      <td className="p-3 font-bold text-white">${Number(car.price || 0).toLocaleString('es-CO')}</td>
+                      <td className="p-3 text-right">
+                        <button
+                          onClick={() => deleteCar(car.id)}
+                          className="bg-red-500/10 hover:bg-red-500 text-red-400 hover:text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors"
+                        >
+                          Eliminar
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
-          ) : (
-            <div className="text-center py-16 bg-zinc-950 rounded-2xl border border-zinc-900">
-              <p className="text-zinc-500 text-sm">No hay solicitudes de test drive registradas por el momento.</p>
-            </div>
-          )}
+          </div>
+
         </div>
       )}
 
-      {/* Contenido de Inventario */}
-      {activeTab === 'inventory' && (
-        <div className="bg-zinc-950 border border-zinc-900 p-6 rounded-2xl max-w-2xl mx-auto">
-          <h2 className="text-xl font-bold mb-6">Registrar Nuevo Vehículo en el Catálogo</h2>
-          <form onSubmit={handleAddCar} className="space-y-4">
-            <Input 
-              label="Nombre del Modelo" 
-              placeholder="Ej. BMW M5 Competition" 
-              value={newCar.name} 
-              onChange={(e) => setNewCar({...newCar, name: e.target.value})}
-              required
-            />
-            <Input 
-              label="Precio (USD)" 
-              type="number" 
-              placeholder="Ej. 95000" 
-              value={newCar.price} 
-              onChange={(e) => setNewCar({...newCar, price: e.target.value})}
-              required
-            />
-            <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold tracking-wider text-zinc-300 uppercase">Categoría</label>
-              <select 
-                className="w-full bg-zinc-900 border border-zinc-800 text-white px-4 py-3 rounded-xl focus:outline-none focus:border-amber-400 text-sm"
-                value={newCar.category}
-                onChange={(e) => setNewCar({...newCar, category: e.target.value})}
-              >
-                <option value="Deportivo">Deportivo</option>
-                <option value="SUV">SUV</option>
-                <option value="Superdeportivo">Superdeportivo</option>
-                <option value="Muscle Car">Muscle Car</option>
-              </select>
+      {/* VISTA 2: HISTORIAL DE VENTAS */}
+      {activeTab === 'orders' && (
+        <div className="bg-slate-900/85 backdrop-blur-md border border-slate-800 rounded-2xl p-6 shadow-xl space-y-6">
+          
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-800 pb-4">
+            <div>
+              <h2 className="text-lg font-bold text-white">Registro Global de Ventas</h2>
+              <p className="text-xs text-slate-400">Listado de todas las transacciones procesadas en el checkout.</p>
             </div>
-            <Input 
-              label="URL de la Imagen" 
-              placeholder="https://images.unsplash.com/..." 
-              value={newCar.image} 
-              onChange={(e) => setNewCar({...newCar, image: e.target.value})}
-              required
-            />
-            <div className="pt-4">
-              <Button type="submit" className="w-full">Publicar en el Catálogo</Button>
+
+            {orders.length > 0 && (
+              <div className="flex gap-3">
+                <button
+                  onClick={() => exportPurchasesToExcel(orders)}
+                  className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-4 py-2 rounded-xl text-xs flex items-center gap-2 shadow-lg transition-colors"
+                >
+                  📥 Exportar Historial a Excel (.xlsx)
+                </button>
+                <button
+                  onClick={handleClearOrders}
+                  className="bg-red-500/10 hover:bg-red-500 text-red-400 hover:text-white px-3 py-2 rounded-xl text-xs font-semibold transition-colors"
+                >
+                  Vaciar Registro
+                </button>
+              </div>
+            )}
+          </div>
+
+          {orders.length === 0 ? (
+            <div className="text-center py-16 text-slate-500">
+              <p className="text-base">No hay ventas registradas todavía.</p>
+              <p className="text-xs mt-1">Realiza una compra de prueba desde el catálogo para ver el registro aquí.</p>
             </div>
-          </form>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-sm text-slate-300">
+                <thead className="text-xs uppercase bg-slate-950 text-slate-400">
+                  <tr>
+                    <th className="p-3">N° Orden</th>
+                    <th className="p-3">Fecha</th>
+                    <th className="p-3">Cliente</th>
+                    <th className="p-3">Cédula / ID</th>
+                    <th className="p-3">Ciudad</th>
+                    <th className="p-3">Vehículo</th>
+                    <th className="p-3">Total</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-800/60">
+                  {orders.map((item, idx) => (
+                    <tr key={idx} className="hover:bg-slate-950/40">
+                      <td className="p-3 font-mono text-xs text-yellow-500 font-bold">{item.orderId}</td>
+                      <td className="p-3 text-xs text-slate-400">{item.date}</td>
+                      <td className="p-3 font-semibold text-white">{item.clientName}</td>
+                      <td className="p-3 text-xs">{item.documentId}</td>
+                      <td className="p-3 text-xs">{item.city}</td>
+                      <td className="p-3 text-xs font-semibold text-slate-200">{item.carTitle}</td>
+                      <td className="p-3 font-black text-yellow-500">${Number(item.price || 0).toLocaleString('es-CO')}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
         </div>
       )}
+
     </div>
   );
 }

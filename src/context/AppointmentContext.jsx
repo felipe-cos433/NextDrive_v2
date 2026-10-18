@@ -1,6 +1,6 @@
-import React, { createContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 
-export const AppointmentContext = createContext();
+const AppointmentContext = createContext();
 
 export function AppointmentProvider({ children }) {
   const [appointments, setAppointments] = useState(() => {
@@ -13,12 +13,17 @@ export function AppointmentProvider({ children }) {
   }, [appointments]);
 
   const addAppointment = (appointmentData) => {
-    const newApp = { id: Date.now(), ...appointmentData, status: 'Pendiente' };
-    setAppointments(prev => [newApp, ...prev]);
+    const newAppointment = {
+      id: Date.now(),
+      dateCreated: new Date().toLocaleDateString('es-CO'),
+      status: 'Pendiente',
+      ...appointmentData,
+    };
+    setAppointments((prev) => [newAppointment, ...prev]);
   };
 
   const deleteAppointment = (id) => {
-    setAppointments(prev => prev.filter(app => app.id !== id));
+    setAppointments((prev) => prev.filter((item) => item.id !== id));
   };
 
   return (
@@ -27,3 +32,5 @@ export function AppointmentProvider({ children }) {
     </AppointmentContext.Provider>
   );
 }
+
+export const useAppointments = () => useContext(AppointmentContext);
