@@ -4,33 +4,51 @@ import { useNavigate, useLocation } from 'react-router-dom';
 export const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null); // Visitante navegando libremente
+  const [user, setUser] = useState(() => {
+    try {
+      const saved = localStorage.getItem('nextdrive_user');
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
+
   const [pendingAction, setPendingAction] = useState(null);
   const navigate = useNavigate();
   const location = useLocation();
 
-  const login = (userName) => {
-    const newUser = { name: userName || 'Juan Felipe' };
-    setUser(newUser);
+  // Función de inicio de sesión simplificada (Admin o Usuario)
+  const login = (email, password, name = 'Usuario') => {
+    // Definimos el rol de manera estricta según el correo o la selección
+    const isAdmin = email.toLowerCase().includes('admin');
+    const userRole = isAdmin ? 'admin' : 'usuario';
+    
+    const newUser = {
+      name: name || (isAdmin ? 'Administrador' : 'Juan Felipe'),
+      email: email,
+      role: userRole // 'admin' o 'usuario'
+    };
 
-    // Si había una acción pendiente (ej. presionar un botón de cotizar), se ejecuta ahora
+    setUser(newUser);
+    localStorage.setItem('nextdrive_user', JSON.stringify(newUser));
+
     if (pendingAction) {
       pendingAction();
       setPendingAction(null);
     }
 
-    // Regresa a la vista donde estaba o al Inicio
-    const origin = location.state?.from?.pathname || '/';
+    // Redirección inteligente según el rol
+    const origin = location.state?.from?.pathname || (userRole === 'admin' ? '/admin' : '/catalog');
     navigate(origin, { replace: true });
   };
 
   const logout = () => {
     setUser(null);
+    localStorage.removeItem('nextdrive_user');
     setPendingAction(null);
     navigate('/');
   };
 
-  // Solo se invoca manualmente cuando el usuario presiona un botón de función interactiva
   const requireAuth = (actionCallback) => {
     if (!user) {
       setPendingAction(() => actionCallback);

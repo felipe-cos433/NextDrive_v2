@@ -9,8 +9,10 @@ import CarDetail from './pages/CarDetail';
 import Financing from './pages/Financing';
 import Compare from './pages/Compare';
 import Contact from './pages/Contact';
+import Cart from './pages/Cart';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import AdminDashboard from './pages/AdminDashboard';
 
 export default function App() {
   return (
@@ -20,10 +22,12 @@ export default function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/catalog" element={<Catalog />} />
-          <Route path="/car/:id" element={<CarDetail />} />
+          <Route path="/car/:id" element={<CarDetail />} /> {/* <- Esta ruta carga los detalles */}
           <Route path="/financing" element={<Financing />} />
           <Route path="/compare" element={<Compare />} />
           <Route path="/contact" element={<Contact />} />
+          <Route path="/cart" element={<Cart />} />
+          <Route path="/admin" element={<AdminDashboard />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="*" element={<Home />} />

@@ -1,23 +1,22 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
-const SalesContext = createContext();
+export const SalesContext = createContext();
 
 export function SalesProvider({ children }) {
   const [sales, setSales] = useState(() => {
-    const saved = localStorage.getItem('nextdrive_sales');
-    return saved ? JSON.parse(saved) : [];
+    try {
+      const saved = localStorage.getItem('nextdrive_sales');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
   });
 
   useEffect(() => {
     localStorage.setItem('nextdrive_sales', JSON.stringify(sales));
   }, [sales]);
 
-  const addSale = (saleData) => {
-    const newSale = {
-      id: Date.now(),
-      date: new Date().toLocaleString(),
-      ...saleData
-    };
+  const addSale = (newSale) => {
     setSales((prev) => [newSale, ...prev]);
   };
 
