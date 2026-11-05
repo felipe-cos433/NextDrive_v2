@@ -2,144 +2,106 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 
 const CarContext = createContext();
 
+// Clave v3 para forzar al navegador a cargar únicamente estos 5 vehículos
+const LOCAL_STORAGE_KEY = 'nextdrive_cars_v3';
+
 const INITIAL_CARS = [
   {
-    id: 1,
-    title: 'NextDrive Apex GT',
+    id: '1',
+    name: 'Porsche 911 GT3 RS',
     brand: 'Porsche',
+    price: 1250000000,
     category: 'Deportivo',
-    price: 225000,
-    year: 2026,
-    image: 'https://images.unsplash.com/photo-1614162692292-7ac56d7f7f1e?auto=format&fit=crop&q=80&w=1200',
-    description: 'Deportivo de altas prestaciones con motor bóxer atmosférico y máxima aerodinámica.'
+    year: 2024,
+    description: 'Motor atmosférico de 4.0 litros, 525 CV y aerodinámica de carreras de circuito homologado para calle.',
+    image: 'https://images.unsplash.com/photo-1614162692292-7ac56d7f7f1e?auto=format&fit=crop&w=1200&q=80'
   },
   {
-    id: 2,
-    title: 'NextDrive Urban Cross',
-    brand: 'Tesla',
-    category: 'SUV',
-    price: 48000,
-    year: 2025,
-    image: 'https://images.unsplash.com/photo-1560958089-b8a1929cea89?auto=format&fit=crop&q=80&w=1200',
-    description: 'SUV 100% eléctrico con gran autonomía, espacio interior optimizado y piloto automático.'
+    id: '2',
+    name: 'Lamborghini Huracán Sterrato',
+    brand: 'Lamborghini',
+    price: 1450000000,
+    category: 'Deportivo',
+    year: 2024,
+    description: 'Motor V10 de 5.2 Litros diseñado para el máximo rendimiento en asfalto y tierra con tracción integral.',
+    image: 'https://images.unsplash.com/photo-1544829099-b9a0c07fad1a?auto=format&fit=crop&w=1200&q=80'
   },
   {
-    id: 3,
-    title: 'NextDrive Titan Pro',
-    brand: 'Land Rover',
-    category: 'Camioneta',
-    price: 85000,
-    year: 2026,
-    image: 'https://images.unsplash.com/photo-1563720223185-11003d516935?auto=format&fit=crop&q=80&w=1200',
-    description: 'Resistencia y potencia máxima para todo terreno sin sacrificar confort en cabina.'
+    id: '3',
+    name: 'Ferrari 296 GTB',
+    brand: 'Ferrari',
+    price: 1680000000,
+    category: 'Deportivo',
+    year: 2024,
+    description: 'Motor V6 Turbo Híbrido que entrega 830 CV de potencia combinada con aceleración brutal.',
+    image: 'https://images.unsplash.com/photo-1583121274602-3e2820c69888?auto=format&fit=crop&w=1200&q=80'
   },
   {
-    id: 4,
-    title: 'BMW M4 Competition',
+    id: '4',
+    name: 'BMW M5 Competition',
     brand: 'BMW',
-    category: 'Deportivo',
-    price: 98000,
-    year: 2024,
-    image: 'https://images.unsplash.com/photo-1555215695-3004980ad54e?auto=format&fit=crop&q=80&w=1200',
-    description: 'Rendimiento excepcional con motor TwinPower Turbo de 510 CV y tracción xDrive.'
-  },
-  {
-    id: 5,
-    title: 'Mercedes-AMG GT Coupe',
-    brand: 'Mercedes',
-    category: 'Deportivo',
-    price: 175000,
-    year: 2024,
-    image: 'https://images.unsplash.com/photo-1618843479313-40f8afb4b4d8?auto=format&fit=crop&q=80&w=1200',
-    description: 'Diseño imponente y potencia V8 biturbo con tracción total variable.'
-  },
-  {
-    id: 6,
-    title: 'Audi RS Q8',
-    brand: 'Audi',
-    category: 'SUV',
-    price: 130000,
-    year: 2024,
-    image: 'https://images.unsplash.com/photo-1606664515524-ed2f786a0bd6?auto=format&fit=crop&q=80&w=1200',
-    description: 'El SUV deportivo definitivo de Audi Sport con 600 CV de pura potencia.'
-  },
-  {
-    id: 7,
-    title: 'Toyota Supra GR',
-    brand: 'Toyota',
-    category: 'Deportivo',
-    price: 55000,
-    year: 2024,
-    image: 'https://images.unsplash.com/photo-1544829099-b9a0c07fad1a?auto=format&fit=crop&q=80&w=1200',
-    description: 'Leyenda deportiva japonesa con motor turbo de 6 cilindros en línea.'
-  },
-  {
-    id: 8,
-    title: 'Porsche Taycan Turbo S',
-    brand: 'Porsche',
-    category: 'Eléctrico',
-    price: 190000,
-    year: 2024,
-    image: 'https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&q=80&w=1200',
-    description: 'Sedán eléctrico de alto rendimiento con arquitectura de 800 voltios y 761 CV.'
-  },
-  {
-    id: 9,
-    title: 'BMW M5 CS',
-    brand: 'BMW',
+    price: 780000000,
     category: 'Sedán',
-    price: 142000,
     year: 2023,
-    image: 'https://images.unsplash.com/photo-1580273916550-e323be2ae537?auto=format&fit=crop&q=80&w=1200',
-    description: 'El sedán ejecutivo más potente de la división M con 635 CV.'
+    description: 'Sedán ejecutivo de altísimo rendimiento con motor V8 M TwinPower Turbo y tracción xDrive.',
+    image: 'https://images.unsplash.com/photo-1555215695-3004980ad54e?auto=format&fit=crop&w=1200&q=80'
   },
   {
-    id: 10,
-    title: 'Honda Civic Type R',
-    brand: 'Honda',
-    category: 'Sedán',
-    price: 45000,
+    id: '5',
+    name: 'Mercedes-AMG G 63',
+    brand: 'Mercedes-Benz',
+    price: 1150000000,
+    category: 'Camioneta',
     year: 2024,
-    image: 'https://images.unsplash.com/photo-1617814076367-b759c7d7e738?auto=format&fit=crop&q=80&w=1200',
-    description: 'Hatchback/Sedán deportivo de tracción delantera de alto rendimiento.'
+    description: 'La camioneta todoterreno definitiva con motor V8 Biturbo de 585 CV y acabados de lujo industrial.',
+    image: 'https://images.unsplash.com/photo-1520050206274-a1ae44613e6d?auto=format&fit=crop&w=1200&q=80'
   }
 ];
 
 export function CarProvider({ children }) {
   const [cars, setCars] = useState(() => {
-    const saved = localStorage.getItem('nextdrive_cars');
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        // Validar que los objetos guardados tengan un precio numérico real
-        if (Array.isArray(parsed) && parsed.length >= 10 && !isNaN(parsed[0]?.price)) {
-          return parsed;
-        }
-      } catch (e) {
-        console.error(e);
-      }
+    try {
+      const savedCars = localStorage.getItem(LOCAL_STORAGE_KEY);
+      return savedCars ? JSON.parse(savedCars) : INITIAL_CARS;
+    } catch {
+      return INITIAL_CARS;
     }
-    return INITIAL_CARS;
   });
 
   useEffect(() => {
-    localStorage.setItem('nextdrive_cars', JSON.stringify(cars));
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(cars));
   }, [cars]);
 
   const addCar = (newCar) => {
-    const carWithId = { id: Date.now(), ...newCar, price: Number(newCar.price) };
-    setCars((prev) => [carWithId, ...prev]);
+    const carWithId = {
+      ...newCar,
+      id: Date.now().toString(),
+      price: Number(newCar.price)
+    };
+    setCars((prevCars) => [carWithId, ...prevCars]);
+  };
+
+  const updateCar = (id, updatedData) => {
+    setCars((prevCars) =>
+      prevCars.map((car) => (car.id === id ? { ...car, ...updatedData, price: Number(updatedData.price) } : car))
+    );
   };
 
   const deleteCar = (id) => {
-    setCars((prev) => prev.filter((car) => car.id !== id));
+    setCars((prevCars) => prevCars.filter((car) => car.id !== id));
   };
 
   return (
-    <CarContext.Provider value={{ cars, addCar, deleteCar }}>
+    <CarContext.Provider value={{ cars, addCar, updateCar, deleteCar }}>
       {children}
     </CarContext.Provider>
   );
 }
 
-export const useCars = () => useContext(CarContext);
+export const useCars = () => {
+  const context = useContext(CarContext);
+  if (!context) {
+    throw new Error('useCars debe ser usado dentro de un CarProvider');
+  }
+  return context;
+};

@@ -1,143 +1,114 @@
 import React, { useState } from 'react';
 import { useCart } from '../context/CartContext';
-import { exportPurchasesToExcel } from '../utils/exportToExcel';
+import { formatCOP } from '../utils/helpers';
 
-export default function CheckoutModal({ isOpen, onClose }) {
-  const { cart, clearCart } = useCart();
-
+export default function CheckoutModal() {
+  const { cart, clearCart, isCheckoutOpen, setIsCheckoutOpen } = useCart();
   const [formData, setFormData] = useState({
-    fullName: '',
-    documentId: '',
-    city: '',
-    phone: ''
+    name: '',
+    email: '',
+    phone: '',
+    city: 'Medellín',
+    paymentMethod: 'transfer'
   });
 
-  if (!isOpen) return null;
+  if (!isCheckoutOpen) return null;
 
-  const totalAmount = cart.reduce((acc, car) => acc + Number(car.price || 0), 0);
+  const total = cart.reduce((acc, car) => acc + Number(car.price || 0), 0);
 
-  const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
-  };
-
-  const handleSubmitPayment = (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
-
-    if (!formData.fullName || !formData.documentId || !formData.city) {
-      alert('Por favor completa todos los campos requeridos.');
-      return;
-    }
-
-    // Estructuramos cada vehículo comprado en una orden
-    const purchasesData = cart.map((car, index) => ({
-      orderId: `ND-${Math.floor(100000 + Math.random() * 900000)}`,
-      date: new Date().toLocaleString('es-CO'),
-      clientName: formData.fullName,
-      documentId: formData.documentId,
-      city: formData.city,
-      phone: formData.phone,
-      carTitle: car.title || car.name,
-      category: car.category || 'Deportivo',
-      price: car.price,
-      status: 'Aprobado'
-    }));
-
-    // 🚀 1. Guardamos la compra en el historial local (opcional)
-    const existingOrders = JSON.parse(localStorage.getItem('nextdrive_orders') || '[]');
-    localStorage.setItem('nextdrive_orders', JSON.stringify([...existingOrders, ...purchasesData]));
-
-    // 🚀 2. Generamos y descargamos el archivo Excel automáticamente
-    exportPurchasesToExcel(purchasesData);
-
-    // 🚀 3. Limpiamos carrito y cerramos modal
+    alert('¡Solicitud de compra enviada con éxito! Un asesor de NextDrive te contactará pronto.');
     clearCart();
-    alert('¡Pago procesado con éxito! Se ha descargado automáticamente tu comprobante en Excel.');
-    onClose();
+    setIsCheckoutOpen(false);
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-md p-4">
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-lg p-6 shadow-2xl space-y-6">
-        
-        <div className="flex justify-between items-center border-b border-slate-800 pb-4">
-          <h2 className="text-xl font-bold text-white">Finalizar Compra</h2>
-          <button onClick={onClose} className="text-slate-400 hover:text-white font-bold text-lg">✕</button>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md">
+      <div className="bg-slate-900 border border-yellow-500/30 w-full max-w-lg rounded-3xl p-6 sm:p-8 space-y-6 shadow-2xl relative">
+        <button
+          onClick={() => setIsCheckoutOpen(false)}
+          className="absolute top-4 right-4 text-slate-400 hover:text-white text-xl font-bold p-2"
+        >
+          ✕
+        </button>
+
+        <div>
+          <h2 className="text-2xl font-black text-white">Finalizar Compra</h2>
+          <p className="text-xs text-slate-400 mt-1">Completa tus datos para procesar la reserva del vehículo.</p>
         </div>
 
-        <form onSubmit={handleSubmitPayment} className="space-y-4">
-          
+        {/* Resumen del Pedido */}
+        <div className="bg-slate-950/60 p-4 rounded-2xl border border-slate-800 space-y-2">
+          <div className="flex justify-between text-xs text-slate-400">
+            <span>Vehículos seleccionados:</span>
+            <span className="font-bold text-white">{cart.length}</span>
+          </div>
+          <div className="flex justify-between text-sm font-bold">
+            <span className="text-slate-300">Total a pagar:</span>
+            <span className="text-yellow-400">{formatCOP(total)}</span>
+          </div>
+        </div>
+
+        {/* Formulario */}
+        <form onSubmit={handleSubmit} className="space-y-4 text-xs">
           <div>
-            <label className="block text-xs font-semibold text-slate-400 uppercase mb-1">Nombre Completo *</label>
+            <label className="block text-slate-400 font-bold mb-1">Nombre Completo</label>
             <input
               type="text"
-              name="fullName"
               required
-              value={formData.fullName}
-              onChange={handleChange}
-              placeholder="Ej. Juan Felipe Niño"
-              className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2.5 text-white text-sm focus:outline-none focus:border-yellow-500"
+              placeholder="Ej. Juan Pérez"
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white focus:border-yellow-500 outline-none"
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold text-slate-400 uppercase mb-1">Cédula / Identificación *</label>
+              <label className="block text-slate-400 font-bold mb-1">Correo Electrónico</label>
               <input
-                type="text"
-                name="documentId"
+                type="email"
                 required
-                value={formData.documentId}
-                onChange={handleChange}
-                placeholder="1020304050"
-                className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2.5 text-white text-sm focus:outline-none focus:border-yellow-500"
+                placeholder="juan@ejemplo.com"
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white focus:border-yellow-500 outline-none"
               />
             </div>
-
             <div>
-              <label className="block text-xs font-semibold text-slate-400 uppercase mb-1">Ciudad *</label>
+              <label className="block text-slate-400 font-bold mb-1">Teléfono / WhatsApp</label>
               <input
-                type="text"
-                name="city"
+                type="tel"
                 required
-                value={formData.city}
-                onChange={handleChange}
-                placeholder="Medellín"
-                className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2.5 text-white text-sm focus:outline-none focus:border-yellow-500"
+                placeholder="+57 300 000 0000"
+                value={formData.phone}
+                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white focus:border-yellow-500 outline-none"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-400 uppercase mb-1">Teléfono de Contacto</label>
-            <input
-              type="text"
-              name="phone"
-              value={formData.phone}
-              onChange={handleChange}
-              placeholder="300 123 4567"
-              className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2.5 text-white text-sm focus:outline-none focus:border-yellow-500"
-            />
-          </div>
-
-          <div className="border-t border-slate-800 pt-4 flex justify-between items-center">
-            <div>
-              <p className="text-xs text-slate-500 uppercase">Total a Pagar</p>
-              <p className="text-2xl font-black text-yellow-500">${totalAmount.toLocaleString('es-CO')}</p>
-            </div>
-
-            <button
-              type="submit"
-              className="bg-yellow-500 hover:bg-yellow-400 text-slate-950 font-bold px-6 py-3 rounded-xl transition-colors shadow-lg"
+            <label className="block text-slate-400 font-bold mb-1">Método de Pago Preferido</label>
+            <select
+              value={formData.paymentMethod}
+              onChange={(e) => setFormData({ ...formData, paymentMethod: e.target.value })}
+              className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white focus:border-yellow-500 outline-none"
             >
-              Confirmar y Descargar Excel 📊
-            </button>
+              <option value="transfer">Transferencia Bancaria (Bancolombia / Nequi)</option>
+              <option value="financing">Financiación Directa / Crédito</option>
+              <option value="card">Tarjeta de Crédito / Débito</option>
+            </select>
           </div>
 
+          <button
+            type="submit"
+            className="w-full py-3.5 bg-yellow-500 hover:bg-yellow-400 text-slate-950 font-black rounded-xl text-sm transition shadow-lg mt-4"
+          >
+            Confirmar Reserva
+          </button>
         </form>
-
       </div>
     </div>
   );

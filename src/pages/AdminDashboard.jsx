@@ -1,220 +1,268 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useCars } from '../context/CarContext';
-import { exportPurchasesToExcel } from '../utils/exportToExcel';
+import { useAppointments } from '../context/AppointmentContext';
+import { useFinancing } from '../context/FinancingContext';
+import { useSales } from '../context/SalesContext';
+import { formatCOP, showAlert } from '../utils/helpers';
 
 export default function AdminDashboard() {
-  const { cars, addCar, deleteCar } = useCars();
-  const [orders, setOrders] = useState([]);
-  const [activeTab, setActiveTab] = useState('inventory'); // 'inventory' | 'orders'
+  const { cars, addCar, updateCar, deleteCar } = useCars();
+  const { appointments, updateAppointmentStatus, deleteAppointment } = useAppointments();
+  const { financingRequests, updateFinancingStatus } = useFinancing();
+  const { sales } = useSales();
 
-  const [newCar, setNewCar] = useState({
-    title: '',
+  const [activeTab, setActiveTab] = useState('inventory'); // 'inventory' | 'appointments' | 'financing' | 'sales'
+
+  const [editingId, setEditingId] = useState(null);
+  const [formData, setFormData] = useState({
+    name: '',
     brand: '',
-    category: 'Deportivo',
-    price: '',
     year: 2026,
+    price: 200000000,
+    category: 'Deportivo',
     image: '',
     description: ''
   });
 
-  useEffect(() => {
-    const savedOrders = JSON.parse(localStorage.getItem('nextdrive_orders') || '[]');
-    setOrders(savedOrders);
-  }, []);
+  const handleEditCar = (car) => {
+    setEditingId(car.id);
+    setFormData(car);
+    setActiveTab('inventory');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
-  const handleAddCarSubmit = (e) => {
-    e.preventDefault();
-    if (!newCar.title || !newCar.price) return;
-
-    addCar({
-      ...newCar,
-      price: Number(newCar.price)
-    });
-
-    setNewCar({
-      title: '',
+  const handleCancelEdit = () => {
+    setEditingId(null);
+    setFormData({
+      name: '',
       brand: '',
-      category: 'Deportivo',
-      price: '',
       year: 2026,
+      price: 200000000,
+      category: 'Deportivo',
       image: '',
       description: ''
     });
-
-    alert('¡Vehículo agregado con éxito al catálogo!');
   };
 
-  const handleClearOrders = () => {
-    if (window.confirm('¿Estás seguro de limpiar todo el historial de ventas?')) {
-      localStorage.removeItem('nextdrive_orders');
-      setOrders([]);
+  const handleCarSubmit = (e) => {
+    e.preventDefault();
+    if (editingId) {
+      updateCar(editingId, formData);
+      showAlert?.success?.('Actualizado', 'Vehículo modificado correctamente.');
+    } else {
+      addCar(formData);
+      showAlert?.success?.('Creado', 'Vehículo agregado al inventario.');
     }
+    handleCancelEdit();
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-      
+    <div className="max-w-7xl mx-auto px-4 py-10 space-y-8">
       {/* Encabezado */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-800 pb-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-black text-white">
-            Panel de <span className="text-yellow-500">Administración</span>
-          </h1>
-          <p className="text-slate-400 text-sm mt-1">Gestiona el inventario de autos y revisa el historial de ventas.</p>
+          <h1 className="text-3xl font-black text-white">Panel de Administración</h1>
+          <p className="text-slate-400 text-sm mt-1">Control total de inventario, citas, créditos y ventas</p>
         </div>
+        <span className="bg-yellow-500/10 text-yellow-400 border border-yellow-500/30 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider">
+          Modo Administrador Activo
+        </span>
+      </div>
 
-        {/* Pestañas */}
-        <div className="flex bg-slate-900 border border-slate-800 p-1.5 rounded-xl gap-2">
-          <button
-            onClick={() => setActiveTab('inventory')}
-            className={`px-4 py-2 rounded-lg text-xs font-bold transition-colors ${
-              activeTab === 'inventory' ? 'bg-yellow-500 text-slate-950' : 'text-slate-400 hover:text-white'
-            }`}
-          >
-            🚗 Inventario ({cars.length})
-          </button>
-          <button
-            onClick={() => setActiveTab('orders')}
-            className={`px-4 py-2 rounded-lg text-xs font-bold transition-colors ${
-              activeTab === 'orders' ? 'bg-yellow-500 text-slate-950' : 'text-slate-400 hover:text-white'
-            }`}
-          >
-            📊 Historial de Ventas ({orders.length})
-          </button>
+      {/* Tarjetas de Métricas (KPIs) */}
+      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+        <div className="glass-card p-5 rounded-2xl">
+          <span className="text-xs text-slate-400 uppercase font-bold">Total Vehículos</span>
+          <h3 className="text-3xl font-black text-yellow-400 mt-1">{cars?.length || 0}</h3>
+        </div>
+        <div className="glass-card p-5 rounded-2xl">
+          <span className="text-xs text-slate-400 uppercase font-bold">Citas Activas</span>
+          <h3 className="text-3xl font-black text-yellow-400 mt-1">{appointments?.length || 0}</h3>
+        </div>
+        <div className="glass-card p-5 rounded-2xl">
+          <span className="text-xs text-slate-400 uppercase font-bold">Créditos en Estudio</span>
+          <h3 className="text-3xl font-black text-yellow-400 mt-1">{financingRequests?.length || 0}</h3>
+        </div>
+        <div className="glass-card p-5 rounded-2xl">
+          <span className="text-xs text-slate-400 uppercase font-bold">Ventas Totales</span>
+          <h3 className="text-3xl font-black text-emerald-400 mt-1">{sales?.length || 0}</h3>
         </div>
       </div>
 
-      {/* VISTA 1: INVENTARIO */}
+      {/* Navegación por Pestañas */}
+      <div className="flex flex-wrap gap-3 border-b border-slate-800 pb-3">
+        <button
+          onClick={() => setActiveTab('inventory')}
+          className={`px-5 py-2.5 rounded-xl font-bold text-xs transition ${
+            activeTab === 'inventory' ? 'bg-yellow-500 text-slate-950 shadow-lg' : 'bg-slate-900 text-slate-400 hover:text-white'
+          }`}
+        >
+          📦 Inventario
+        </button>
+        <button
+          onClick={() => setActiveTab('appointments')}
+          className={`px-5 py-2.5 rounded-xl font-bold text-xs transition ${
+            activeTab === 'appointments' ? 'bg-yellow-500 text-slate-950 shadow-lg' : 'bg-slate-900 text-slate-400 hover:text-white'
+          }`}
+        >
+          📅 Citas ({appointments?.length || 0})
+        </button>
+        <button
+          onClick={() => setActiveTab('financing')}
+          className={`px-5 py-2.5 rounded-xl font-bold text-xs transition ${
+            activeTab === 'financing' ? 'bg-yellow-500 text-slate-950 shadow-lg' : 'bg-slate-900 text-slate-400 hover:text-white'
+          }`}
+        >
+          🏦 Financiación ({financingRequests?.length || 0})
+        </button>
+        <button
+          onClick={() => setActiveTab('sales')}
+          className={`px-5 py-2.5 rounded-xl font-bold text-xs transition ${
+            activeTab === 'sales' ? 'bg-yellow-500 text-slate-950 shadow-lg' : 'bg-slate-900 text-slate-400 hover:text-white'
+          }`}
+        >
+          💰 Historial de Ventas ({sales?.length || 0})
+        </button>
+      </div>
+
+      {/* PESTAÑA 1: INVENTARIO */}
       {activeTab === 'inventory' && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          
-          <div className="bg-slate-900/85 backdrop-blur-md border border-slate-800 p-6 rounded-2xl shadow-xl h-fit space-y-4">
-            <h2 className="text-lg font-bold text-white border-b border-slate-800 pb-3">Agregar Nuevo Vehículo</h2>
-            
-            <form onSubmit={handleAddCarSubmit} className="space-y-3">
+        <div className="space-y-8">
+          <div className="glass-card p-6 md:p-8 rounded-3xl border border-yellow-500/20">
+            <h2 className="text-xl font-bold text-white mb-6">
+              {editingId ? '✏️ Editar Vehículo' : '➕ Agregar Nuevo Vehículo'}
+            </h2>
+            <form onSubmit={handleCarSubmit} className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div>
-                <label className="block text-xs font-semibold text-slate-400 uppercase mb-1">Modelo / Título</label>
+                <label className="block text-xs font-bold text-slate-400 uppercase mb-2">Modelo</label>
                 <input
                   type="text"
                   required
-                  placeholder="Ej. BMW M3 Touring"
-                  value={newCar.title}
-                  onChange={(e) => setNewCar({ ...newCar, title: e.target.value })}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white text-sm focus:border-yellow-500 focus:outline-none"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white text-sm focus:border-yellow-500 focus:outline-none"
                 />
               </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-400 uppercase mb-1">Marca</label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="Ej. BMW"
-                    value={newCar.brand}
-                    onChange={(e) => setNewCar({ ...newCar, brand: e.target.value })}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white text-sm focus:border-yellow-500 focus:outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-400 uppercase mb-1">Categoría</label>
-                  <select
-                    value={newCar.category}
-                    onChange={(e) => setNewCar({ ...newCar, category: e.target.value })}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white text-sm focus:border-yellow-500 focus:outline-none"
-                  >
-                    <option value="Deportivo">Deportivo</option>
-                    <option value="SUV">SUV</option>
-                    <option value="Camioneta">Camioneta</option>
-                    <option value="Sedán">Sedán</option>
-                    <option value="Eléctrico">Eléctrico</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-400 uppercase mb-1">Precio ($ USD)</label>
-                  <input
-                    type="number"
-                    required
-                    placeholder="85000"
-                    value={newCar.price}
-                    onChange={(e) => setNewCar({ ...newCar, price: e.target.value })}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white text-sm focus:border-yellow-500 focus:outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-400 uppercase mb-1">Año</label>
-                  <input
-                    type="number"
-                    value={newCar.year}
-                    onChange={(e) => setNewCar({ ...newCar, year: Number(e.target.value) })}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white text-sm focus:border-yellow-500 focus:outline-none"
-                  />
-                </div>
-              </div>
-
               <div>
-                <label className="block text-xs font-semibold text-slate-400 uppercase mb-1">URL de la Imagen</label>
+                <label className="block text-xs font-bold text-slate-400 uppercase mb-2">Marca</label>
+                <input
+                  type="text"
+                  required
+                  value={formData.brand}
+                  onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white text-sm focus:border-yellow-500 focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-slate-400 uppercase mb-2">Precio COP</label>
+                <input
+                  type="number"
+                  required
+                  value={formData.price}
+                  onChange={(e) => setFormData({ ...formData, price: Number(e.target.value) })}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white text-sm focus:border-yellow-500 focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-slate-400 uppercase mb-2">Categoría</label>
+                <select
+                  value={formData.category}
+                  onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white text-sm focus:border-yellow-500 focus:outline-none"
+                >
+                  <option value="Deportivo">Deportivo</option>
+                  <option value="SUV">SUV</option>
+                  <option value="Camioneta">Camioneta</option>
+                  <option value="Sedán">Sedán</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-slate-400 uppercase mb-2">Año</label>
+                <input
+                  type="number"
+                  required
+                  value={formData.year}
+                  onChange={(e) => setFormData({ ...formData, year: Number(e.target.value) })}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white text-sm focus:border-yellow-500 focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-slate-400 uppercase mb-2">URL Imagen</label>
                 <input
                   type="url"
-                  placeholder="https://images.unsplash.com/..."
-                  value={newCar.image}
-                  onChange={(e) => setNewCar({ ...newCar, image: e.target.value })}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white text-sm focus:border-yellow-500 focus:outline-none"
+                  required
+                  value={formData.image}
+                  onChange={(e) => setFormData({ ...formData, image: e.target.value })}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white text-sm focus:border-yellow-500 focus:outline-none"
                 />
               </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-400 uppercase mb-1">Descripción</label>
+              <div className="md:col-span-3">
+                <label className="block text-xs font-bold text-slate-400 uppercase mb-2">Descripción</label>
                 <textarea
                   rows="2"
-                  placeholder="Especificaciones clave..."
-                  value={newCar.description}
-                  onChange={(e) => setNewCar({ ...newCar, description: e.target.value })}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white text-sm focus:border-yellow-500 focus:outline-none"
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white text-sm focus:border-yellow-500 focus:outline-none"
                 />
               </div>
-
-              <button
-                type="submit"
-                className="w-full bg-yellow-500 hover:bg-yellow-400 text-slate-950 font-bold py-2.5 rounded-xl transition-colors shadow-lg text-sm"
-              >
-                Guardar Vehículo
-              </button>
+              <div className="md:col-span-3 flex justify-end gap-3">
+                {editingId && (
+                  <button
+                    type="button"
+                    onClick={handleCancelEdit}
+                    className="px-6 py-3 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-xl text-sm transition"
+                  >
+                    Cancelar
+                  </button>
+                )}
+                <button
+                  type="submit"
+                  className="px-8 py-3 bg-yellow-500 hover:bg-yellow-400 text-slate-950 font-black rounded-xl text-sm transition shadow-lg"
+                >
+                  {editingId ? 'Actualizar Vehículo' : 'Guardar Vehículo'}
+                </button>
+              </div>
             </form>
           </div>
 
-          <div className="lg:col-span-2 bg-slate-900/85 backdrop-blur-md border border-slate-800 rounded-2xl p-6 shadow-xl space-y-4">
-            <h2 className="text-lg font-bold text-white border-b border-slate-800 pb-3">Lista de Vehículos Activos</h2>
-            
+          <div className="glass-card rounded-3xl overflow-hidden p-6">
+            <h2 className="text-xl font-bold text-white mb-6">Inventario Activo</h2>
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm text-slate-300">
-                <thead className="text-xs uppercase bg-slate-950 text-slate-400">
+                <thead className="bg-slate-950 text-slate-400 text-xs font-bold uppercase border-b border-slate-800">
                   <tr>
-                    <th className="p-3">Vehículo</th>
-                    <th className="p-3">Categoría</th>
-                    <th className="p-3">Precio</th>
-                    <th className="p-3 text-right">Acciones</th>
+                    <th className="p-4">Vehículo</th>
+                    <th className="p-4">Categoría</th>
+                    <th className="p-4">Precio (COP)</th>
+                    <th className="p-4 text-right">Acciones</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-800/60">
-                  {cars.map((car) => (
-                    <tr key={car.id} className="hover:bg-slate-950/40">
-                      <td className="p-3 font-semibold text-white flex items-center gap-3">
-                        <img src={car.image} alt={car.title} className="w-10 h-10 object-cover rounded-lg bg-slate-950" />
+                  {cars?.map((car) => (
+                    <tr key={car.id} className="hover:bg-slate-900/40 transition">
+                      <td className="p-4 flex items-center gap-4">
+                        <img src={car.image} alt={car.name} className="w-12 h-12 object-cover rounded-lg border border-slate-800" />
                         <div>
-                          <p>{car.title}</p>
-                          <p className="text-xs text-slate-500">{car.brand} • {car.year}</p>
+                          <p className="font-bold text-white">{car.name}</p>
+                          <p className="text-xs text-slate-400">{car.brand} • {car.year}</p>
                         </div>
                       </td>
-                      <td className="p-3"><span className="bg-slate-950 border border-slate-800 px-2 py-1 rounded text-xs text-yellow-500">{car.category}</span></td>
-                      <td className="p-3 font-bold text-white">${Number(car.price || 0).toLocaleString('es-CO')}</td>
-                      <td className="p-3 text-right">
+                      <td className="p-4">
+                        <span className="bg-slate-900 text-yellow-400 text-xs px-3 py-1 rounded-full border border-yellow-500/20">
+                          {car.category}
+                        </span>
+                      </td>
+                      <td className="p-4 font-bold text-white">{formatCOP(car.price)}</td>
+                      <td className="p-4 text-right space-x-2">
+                        <button
+                          onClick={() => handleEditCar(car)}
+                          className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-yellow-400 rounded-lg text-xs font-bold transition"
+                        >
+                          Editar
+                        </button>
                         <button
                           onClick={() => deleteCar(car.id)}
-                          className="bg-red-500/10 hover:bg-red-500 text-red-400 hover:text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors"
+                          className="px-3 py-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-lg text-xs font-bold border border-red-500/20 transition"
                         >
                           Eliminar
                         </button>
@@ -225,77 +273,172 @@ export default function AdminDashboard() {
               </table>
             </div>
           </div>
-
         </div>
       )}
 
-      {/* VISTA 2: HISTORIAL DE VENTAS */}
-      {activeTab === 'orders' && (
-        <div className="bg-slate-900/85 backdrop-blur-md border border-slate-800 rounded-2xl p-6 shadow-xl space-y-6">
-          
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-800 pb-4">
-            <div>
-              <h2 className="text-lg font-bold text-white">Registro Global de Ventas</h2>
-              <p className="text-xs text-slate-400">Listado de todas las transacciones procesadas en el checkout.</p>
-            </div>
-
-            {orders.length > 0 && (
-              <div className="flex gap-3">
-                <button
-                  onClick={() => exportPurchasesToExcel(orders)}
-                  className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-4 py-2 rounded-xl text-xs flex items-center gap-2 shadow-lg transition-colors"
-                >
-                  📥 Exportar Historial a Excel (.xlsx)
-                </button>
-                <button
-                  onClick={handleClearOrders}
-                  className="bg-red-500/10 hover:bg-red-500 text-red-400 hover:text-white px-3 py-2 rounded-xl text-xs font-semibold transition-colors"
-                >
-                  Vaciar Registro
-                </button>
-              </div>
-            )}
-          </div>
-
-          {orders.length === 0 ? (
-            <div className="text-center py-16 text-slate-500">
-              <p className="text-base">No hay ventas registradas todavía.</p>
-              <p className="text-xs mt-1">Realiza una compra de prueba desde el catálogo para ver el registro aquí.</p>
-            </div>
-          ) : (
+      {/* PESTAÑA 2: CITAS */}
+      {activeTab === 'appointments' && (
+        <div className="glass-card rounded-3xl p-6">
+          <h2 className="text-xl font-bold text-white mb-6">Agendamiento de Citas</h2>
+          {appointments && appointments.length > 0 ? (
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm text-slate-300">
-                <thead className="text-xs uppercase bg-slate-950 text-slate-400">
+                <thead className="bg-slate-950 text-slate-400 text-xs font-bold uppercase border-b border-slate-800">
                   <tr>
-                    <th className="p-3">N° Orden</th>
-                    <th className="p-3">Fecha</th>
-                    <th className="p-3">Cliente</th>
-                    <th className="p-3">Cédula / ID</th>
-                    <th className="p-3">Ciudad</th>
-                    <th className="p-3">Vehículo</th>
-                    <th className="p-3">Total</th>
+                    <th className="p-4">Cliente</th>
+                    <th className="p-4">Vehículo</th>
+                    <th className="p-4">Fecha / Hora</th>
+                    <th className="p-4">Estado</th>
+                    <th className="p-4 text-right">Acción</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-800/60">
-                  {orders.map((item, idx) => (
-                    <tr key={idx} className="hover:bg-slate-950/40">
-                      <td className="p-3 font-mono text-xs text-yellow-500 font-bold">{item.orderId}</td>
-                      <td className="p-3 text-xs text-slate-400">{item.date}</td>
-                      <td className="p-3 font-semibold text-white">{item.clientName}</td>
-                      <td className="p-3 text-xs">{item.documentId}</td>
-                      <td className="p-3 text-xs">{item.city}</td>
-                      <td className="p-3 text-xs font-semibold text-slate-200">{item.carTitle}</td>
-                      <td className="p-3 font-black text-yellow-500">${Number(item.price || 0).toLocaleString('es-CO')}</td>
+                  {appointments.map((apt) => (
+                    <tr key={apt.id} className="hover:bg-slate-900/40 transition">
+                      <td className="p-4">
+                        <p className="font-bold text-white">{apt.name}</p>
+                        <p className="text-xs text-slate-400">{apt.email}</p>
+                      </td>
+                      <td className="p-4 font-bold text-yellow-400">{apt.carName || 'General'}</td>
+                      <td className="p-4 text-xs">{apt.date} — {apt.time}</td>
+                      <td className="p-4">
+                        <select
+                          value={apt.status || 'Pendiente'}
+                          onChange={(e) => updateAppointmentStatus(apt.id, e.target.value)}
+                          className="bg-slate-950 border border-slate-800 text-xs text-yellow-400 rounded-lg px-2.5 py-1"
+                        >
+                          <option value="Pendiente">Pendiente</option>
+                          <option value="Confirmada">Confirmada</option>
+                          <option value="Completada">Completada</option>
+                          <option value="Cancelada">Cancelada</option>
+                        </select>
+                      </td>
+                      <td className="p-4 text-right">
+                        <button
+                          onClick={() => deleteAppointment(apt.id)}
+                          className="px-3 py-1.5 bg-red-500/10 text-red-400 text-xs font-bold rounded-lg hover:bg-red-500/20 transition"
+                        >
+                          Eliminar
+                        </button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
+          ) : (
+            <div className="text-center py-12 text-slate-400 text-sm">No hay citas registradas.</div>
           )}
-
         </div>
       )}
 
+      {/* PESTAÑA 3: FINANCIACIÓN */}
+      {activeTab === 'financing' && (
+        <div className="glass-card rounded-3xl p-6">
+          <h2 className="text-xl font-bold text-white mb-6">Solicitudes de Crédito</h2>
+          {financingRequests && financingRequests.length > 0 ? (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-sm text-slate-300">
+                <thead className="bg-slate-950 text-slate-400 text-xs font-bold uppercase border-b border-slate-800">
+                  <tr>
+                    <th className="p-4">Cliente</th>
+                    <th className="p-4">Vehículo / Valor</th>
+                    <th className="p-4">Condiciones</th>
+                    <th className="p-4">Estado</th>
+                    <th className="p-4 text-right">Gestionar</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-800/60">
+                  {financingRequests.map((req) => (
+                    <tr key={req.id} className="hover:bg-slate-900/40 transition">
+                      <td className="p-4">
+                        <p className="font-bold text-white">{req.clientName}</p>
+                        <p className="text-xs text-slate-400">{req.email} • {req.phone}</p>
+                      </td>
+                      <td className="p-4">
+                        <p className="font-bold text-yellow-400">{req.carName}</p>
+                        <p className="text-xs text-slate-400">{formatCOP(req.carPrice)}</p>
+                      </td>
+                      <td className="p-4 text-xs">
+                        <p>Inicial: {formatCOP(req.downPayment)}</p>
+                        <p className="text-slate-400">{req.months} meses</p>
+                      </td>
+                      <td className="p-4">
+                        <span className={`text-xs px-3 py-1 rounded-full font-bold ${
+                          req.status === 'Aprobada' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' :
+                          req.status === 'Rechazada' ? 'bg-red-500/10 text-red-400 border border-red-500/20' :
+                          'bg-yellow-500/10 text-yellow-400 border border-yellow-500/20'
+                        }`}>
+                          {req.status}
+                        </span>
+                      </td>
+                      <td className="p-4 text-right space-x-2">
+                        <button
+                          onClick={() => updateFinancingStatus(req.id, 'Aprobada')}
+                          className="px-2.5 py-1 bg-emerald-500/10 text-emerald-400 text-xs font-bold rounded-lg hover:bg-emerald-500/20 transition"
+                        >
+                          Aprobar
+                        </button>
+                        <button
+                          onClick={() => updateFinancingStatus(req.id, 'Rechazada')}
+                          className="px-2.5 py-1 bg-red-500/10 text-red-400 text-xs font-bold rounded-lg hover:bg-red-500/20 transition"
+                        >
+                          Rechazar
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="text-center py-12 text-slate-400 text-sm">No hay solicitudes de financiación.</div>
+          )}
+        </div>
+      )}
+
+      {/* PESTAÑA 4: HISTORIAL DE VENTAS */}
+      {activeTab === 'sales' && (
+        <div className="glass-card rounded-3xl p-6">
+          <h2 className="text-xl font-bold text-white mb-6">Historial de Transacciones y Compras</h2>
+          {sales && sales.length > 0 ? (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-sm text-slate-300">
+                <thead className="bg-slate-950 text-slate-400 text-xs font-bold uppercase border-b border-slate-800">
+                  <tr>
+                    <th className="p-4">ID Transacción</th>
+                    <th className="p-4">Fecha</th>
+                    <th className="p-4">Comprador</th>
+                    <th className="p-4">Vehículos Adquiridos</th>
+                    <th className="p-4 text-right">Total Pagado</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-800/60">
+                  {sales.map((sale) => (
+                    <tr key={sale.id} className="hover:bg-slate-900/40 transition">
+                      <td className="p-4 font-mono text-xs text-yellow-400">#{sale.id}</td>
+                      <td className="p-4 text-xs text-slate-400">{sale.date}</td>
+                      <td className="p-4 font-bold text-white">{sale.clientName || 'Cliente Web'}</td>
+                      <td className="p-4">
+                        {sale.items?.map((item, idx) => (
+                          <div key={idx} className="text-xs text-slate-300">• {item.name} ({formatCOP(item.price)})</div>
+                        ))}
+                      </td>
+                      <td className="p-4 text-right font-black text-emerald-400">
+                        {formatCOP(sale.total)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="text-center py-12 text-slate-400 text-sm">
+              No se han registrado ventas en el concesionario todavía.
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

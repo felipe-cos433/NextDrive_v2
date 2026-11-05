@@ -2,42 +2,18 @@
 @tailwind components;
 @tailwind utilities;
 
-/* 🌟 Animación de Luces de Fondo (Aurora Glow) */
-@keyframes float-glow {
-  0%, 100% {
-    transform: translate(0px, 0px) scale(1);
-  }
-  50% {
-    transform: translate(30px, -50px) scale(1.1);
-  }
+@keyframes slowZoom {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.08); }
+  100% { transform: scale(1); }
 }
 
-@keyframes float-glow-reverse {
-  0%, 100% {
-    transform: translate(0px, 0px) scale(1);
-  }
-  50% {
-    transform: translate(-40px, 40px) scale(1.15);
-  }
+.hero-bg-animation {
+  animation: slowZoom 20s infinite ease-in-out;
 }
 
-.animate-glow-1 {
-  animation: float-glow 12s ease-in-out infinite;
-}
-
-.animate-glow-2 {
-  animation: float-glow-reverse 15s ease-in-out infinite;
-}
-
-/* 💎 Efecto Cristal (Glassmorphism) */
 .glass-card {
   background: rgba(15, 23, 42, 0.75);
   backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.glass-card:hover {
-  border-color: rgba(234, 179, 8, 0.3);
-  box-shadow: 0 10px 30px -10px rgba(234, 179, 8, 0.15);
+  border: 1px solid rgba(234, 179, 8, 0.2);
 }

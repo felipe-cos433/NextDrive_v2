@@ -1,71 +1,66 @@
-import React, { useState, useContext } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { AuthContext } from '../context/AuthContext';
+import React, { useState } from 'react';
+import { useAuth } from '../context/AuthContext';
+import { Link } from 'react-router-dom';
 
 export default function Login() {
+  const { login } = useAuth();
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const { login } = useContext(AuthContext);
-  const navigate = useNavigate();
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (login(email, password)) {
-      navigate('/');
-    } else {
-      alert('Credenciales incorrectas');
-    }
+    login(name || 'Juan Felipe');
   };
 
   return (
-    <div className="min-h-[80vh] flex items-center justify-center px-4">
-      <div className="w-full max-w-md bg-slate-900/80 border border-slate-800 p-8 rounded-2xl shadow-xl backdrop-blur-md">
-        <h2 className="text-3xl font-bold text-center text-white mb-2">
-          Iniciar <span className="text-yellow-500">Sesión</span>
-        </h2>
-        <p className="text-sm text-center text-slate-400 mb-6">
-          Accede a tu cuenta de NextDrive
-        </p>
+    <div className="min-h-[75vh] flex items-center justify-center px-4 py-12">
+      <div className="glass-card max-w-md w-full p-8 rounded-3xl border border-slate-800 space-y-6">
+        <div className="text-center space-y-2">
+          <h1 className="text-2xl font-black text-white">Iniciar Sesión</h1>
+          <p className="text-slate-400 text-xs">
+            Ingresa tu nombre para activar las funciones interactivas de la plataforma.
+          </p>
+        </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4 text-xs">
           <div>
-            <label className="block text-sm text-slate-300 mb-1">Correo Electrónico</label>
+            <label className="text-slate-300 font-bold block mb-1">Tu Nombre</label>
             <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="admin@nextdrive.com o tu email"
+              type="text"
               required
-              className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-yellow-500"
+              placeholder="Ej. Juan Felipe"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-yellow-500"
             />
           </div>
 
           <div>
-            <label className="block text-sm text-slate-300 mb-1">Contraseña</label>
+            <label className="text-slate-300 font-bold block mb-1">Correo Electrónico</label>
             <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
+              type="email"
               required
-              className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-yellow-500"
+              placeholder="correo@ejemplo.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-yellow-500"
             />
           </div>
 
           <button
             type="submit"
-            className="w-full bg-yellow-500 hover:bg-yellow-400 text-slate-950 font-bold py-3 rounded-lg transition-all duration-300 mt-2"
+            className="w-full py-3.5 bg-yellow-500 hover:bg-yellow-400 text-slate-950 font-black rounded-xl text-xs transition shadow-lg shadow-yellow-500/20"
           >
             Ingresar
           </button>
         </form>
 
-        <p className="text-sm text-center text-slate-400 mt-6">
+        <div className="text-center pt-2 text-xs text-slate-400">
           ¿No tienes cuenta?{' '}
-          <Link to="/register" className="text-yellow-500 hover:underline font-semibold">
+          <Link to="/register" className="text-yellow-400 font-bold hover:underline">
             Regístrate aquí
           </Link>
-        </p>
+        </div>
       </div>
     </div>
   );

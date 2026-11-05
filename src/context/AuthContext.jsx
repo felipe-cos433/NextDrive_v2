@@ -1,81 +1,50 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 export const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(() => {
-    // Recuperar usuario con sesión activa
-    const savedUser = localStorage.getItem('nextdrive_active_user');
-    return savedUser ? JSON.parse(savedUser) : null;
-  });
+  const [user, setUser] = useState(null); // Visitante navegando libremente
+  const [pendingAction, setPendingAction] = useState(null);
+  const navigate = useNavigate();
+  const location = useLocation();
 
-  // Función de Iniciar Sesión
-  const login = (email, password) => {
-    // 1. Verificar credenciales de Admin hardcodeadas (opcional/testing)
-    if (email === 'admin@nextdrive.com' && password === '123456') {
-      const adminUser = { id: 1, name: 'Administrador', email, role: 'admin' };
-      setUser(adminUser);
-      localStorage.setItem('nextdrive_active_user', JSON.stringify(adminUser));
-      return true;
+  const login = (userName) => {
+    const newUser = { name: userName || 'Juan Felipe' };
+    setUser(newUser);
+
+    // Si había una acción pendiente (ej. presionar un botón de cotizar), se ejecuta ahora
+    if (pendingAction) {
+      pendingAction();
+      setPendingAction(null);
     }
 
-    // 2. Buscar en la lista de usuarios registrados en localStorage
-    const registeredUsers = JSON.parse(localStorage.getItem('nextdrive_users') || '[]');
-    const foundUser = registeredUsers.find(
-      (u) => u.email.toLowerCase() === email.toLowerCase() && u.password === password
-    );
-
-    if (foundUser) {
-      const activeUser = { id: foundUser.id, name: foundUser.name, email: foundUser.email, role: foundUser.role || 'client' };
-      setUser(activeUser);
-      localStorage.setItem('nextdrive_active_user', JSON.stringify(activeUser));
-      return true;
-    }
-
-    return false; // Credenciales incorrectas
+    // Regresa a la vista donde estaba o al Inicio
+    const origin = location.state?.from?.pathname || '/';
+    navigate(origin, { replace: true });
   };
 
-  // Función de Registro
-  const register = (name, email, password) => {
-    const registeredUsers = JSON.parse(localStorage.getItem('nextdrive_users') || '[]');
-
-    // Validar si el usuario ya existe
-    const exists = registeredUsers.some((u) => u.email.toLowerCase() === email.toLowerCase());
-    if (exists) {
-      alert('El correo ya está registrado. Por favor inicia sesión.');
-      return false;
-    }
-
-    // Crear y guardar el nuevo usuario
-    const newUser = { id: Date.now(), name, email, password, role: 'client' };
-    registeredUsers.push(newUser);
-    localStorage.setItem('nextdrive_users', JSON.stringify(registeredUsers));
-
-    // Autologin directo al registrarse
-    const activeUser = { id: newUser.id, name: newUser.name, email: newUser.email, role: newUser.role };
-    setUser(activeUser);
-    localStorage.setItem('nextdrive_active_user', JSON.stringify(activeUser));
-
-    return true;
-  };
-
-  // Función de Cerrar Sesión
   const logout = () => {
     setUser(null);
-    localStorage.removeItem('nextdrive_active_user');
+    setPendingAction(null);
+    navigate('/');
+  };
+
+  // Solo se invoca manualmente cuando el usuario presiona un botón de función interactiva
+  const requireAuth = (actionCallback) => {
+    if (!user) {
+      setPendingAction(() => actionCallback);
+      navigate('/login', { state: { from: location } });
+    } else {
+      actionCallback();
+    }
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, register, logout }}>
+    <AuthContext.Provider value={{ user, login, logout, requireAuth }}>
       {children}
     </AuthContext.Provider>
   );
 }
 
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth debe ser utilizado dentro de AuthProvider');
-  }
-  return context;
-};
+export const useAuth = () => useContext(AuthContext);

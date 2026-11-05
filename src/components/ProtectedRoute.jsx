@@ -1,18 +1,14 @@
-import React, { useContext } from 'react';
-import { Navigate } from 'react-router-dom';
-import { AuthContext } from '../context/AuthContext';
+import React from 'react';
+import { Navigate, useLocation } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
-export default function ProtectedRoute({ children, adminOnly = false }) {
-  const { user } = useContext(AuthContext);
+export default function ProtectedRoute({ children }) {
+  const { user } = useAuth();
+  const location = useLocation();
 
   if (!user) {
-    // Si no está logueado, redirige al login
-    return <Navigate to="/login" replace />;
-  }
-
-  if (adminOnly && user.role !== 'admin') {
-    // Si requiere ser admin y no lo es, redirige al inicio o catálogo
-    return <Navigate to="/catalog" replace />;
+    // Redirige al login guardando la ruta origen para regresar tras autenticarse
+    return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
   return children;
